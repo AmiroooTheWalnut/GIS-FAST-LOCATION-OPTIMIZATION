@@ -1,0 +1,2104 @@
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  options threads=6;
+   2  set
+   3  i /1*3/
+   4  m /1*12/
+   5  j /small,medium,large/
+   6  k /main,lux,student/
+   7  ;
+   8  parameter
+   9  LP(i)
+  10  /1 100,2 200,3 300/
+  11  LE(i)
+  12  /1 0.5,2 0.6,3 0.8/
+  13  BD(i,k,j)
+  14  /1.main.small 100,1.main.medium 120,1.main.large 140,1.lux.small 90,1.lux.medium 100,1.lux.large 110,1.student.small 50,1.student.medium 70,1.student.large 120,2.main.small 40,2.main.medium 60,2.main.large 90,2.lux.small 55,2.lux.medium 75,2.lux.lar
+      ge 80,2.student.small 35,2.student.medium 65,2.student.large 85,3.main.small 65,3.main.medium 75,3.main.large 105,3.lux.small 20,3.lux.medium 35,3.lux.large 120,3.student.small 75,3.student.medium 85,3.student.large 95/
+  15  TOUG(i,j)
+  16  /1.small 10,1.medium 12,1.large 17,2.small 20,2.medium 24,2.large 28,3.small 15,3.medium 16,3.large 17/
+  17  TC(i)
+  18  /1 10,2 20,3 15/
+  19  ;
+  20  *Static*
+  21  binary variables
+  22  CH(i)
+  23  IO(i,k,m)
+  24  CAP(i,j)
+  25  TOU(i,j)
+  26  ;
+  27  positive variables
+  28  Q(i,k,m)
+  29  SA(i,k,m)
+  30  IN(i,k,m)
+  31  SH(i,k,m)
+  32  ;
+  33  parameter
+  34  H(k)
+  35  /main 20,lux 15,student 25/
+  36  OC /1000/
+  37  SHC(k)
+  38  /main 10,lux 15,student 30/
+  39  MD(k,m)
+  40  /main.1 50,main.2 60,main.3 65,main.4 70,main.5 45,main.6 55,main.7 80,main.8 85,main.9 90,main.10 65,main.11 70,main.12 100
+  41  lux.1 50,lux.2 60,lux.3 65,lux.4 70,lux.5 45,lux.6 55,lux.7 80,lux.8 85,lux.9 90,lux.10 65,lux.11 70,lux.12 100
+  42  student.1 50,student.2 60,student.3 65,student.4 70,student.5 45,student.6 55,student.7 80,student.8 85,student.9 90,student.10 65,student.11 70,student.12 100/
+  43  SP(k)
+  44  /main 15,lux 30,student 12/
+  45  PC(k)
+  46  /main 5,lux 15,student 6/
+  47  CC(j)
+  48  /small 20,medium 30,large 40/
+  49  TOUC /50/
+  50  VC(k)
+  51  /main 4,lux 5,student 2/
+  52  VOL(j)
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+  53  /small 2000,medium 3000,large 4000/
+  54  ;
+  55  free variable z;
+  56  equation obj,TOU_L_CH,CAP_L_CH,IN_BALANCE,SELLING,ISORDER,CAPACITY,CHSH;
+  57  obj.. z=e=sum(i,(LP(i)*LE(i))*CH(i))+sum((i,j),CAP(i,j)*CC(j))+sum((i,j),TOU(i,j)*TOUC)-sum((i,k,m),SA(i,k,m)*SP(k))+sum((i,k,m),Q(i,k,m)*PC(k))+sum((i,k,m),IO(i,k,m)*(OC+TC(i)))+sum((i,k,m),IN(i,k,m)*H(k))+sum((i,k,m),SH(i,k,m)*SHC(k));
+  58  TOU_L_CH(i).. sum(j,TOU(i,j))=l=CH(i);
+  59  CAP_L_CH(i).. sum(j,CAP(i,j))=e=CH(i);
+  60  IN_BALANCE(i,k,m).. Q(i,k,m)+IN(i-1,k,m)-SA(i,k,m)=e=IN(i,k,m);
+  61  *initIN(i,k,m).. IN(i,k,m)=l=10000000$(ord(m) ne 1);
+  62  SELLING(i,k,m).. SA(i,k,m)+SH(i,k,m)=e=sum(j,BD(i,k,j)*CAP(i,j))+sum(j,MD(k,m)*(1+TOUG(i,j))*TOU(i,j));
+  63  ISORDER(i,k,m).. Q(i,k,m)=l=IO(i,k,m)*100000000;
+  64  CAPACITY(i,m).. sum(k,(Q(i,k,m)+IN(i,k,m))*VC(k))=l=sum(j,CAP(i,j)*VOL(j));
+  65  CHSH(i).. sum((k,m),SH(i,k,m))=l=CH(i)*10000000;
+  66  *CHQ(i).. sum((k,m),Q(i,k,m))=l=CH(i)*10000000;
+  67  *CHSA(i).. sum((k,m),SA(i,k,m))=l=CH(i)*10000000;
+  68  *CHIN(i).. sum((k,m),IN(i,k,m))=l=CH(i)*10000000;
+  69  *CHIO(i).. sum((k,m),IO(i,k,m))=l=CH(i)*10000000;
+  70  model Project /ALL/;
+  71  solve Project using mip minimizing z;
+  72  display z.l,CH.l,IN.l,Q.l,SH.l,SA.l,TOU.l,IO.l,CAP.l;
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  24.1.2 r40979 WEX-WEI
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE Project Using MIP From line 71
+
+
+---- obj  =E=  
+
+obj..  - 50*CH(1) - 120*CH(2) - 240*CH(3) - 1010*IO(1,main,1) - 1010*IO(1,main,2) - 1010*IO(1,main,3) - 1010*IO(1,main,4) - 1010*IO(1,main,5) - 1010*IO(1,main,6) - 1010*IO(1,main,7) - 1010*IO(1,main,8) - 1010*IO(1,main,9) - 1010*IO(1,main,10)
+     
+      - 1010*IO(1,main,11) - 1010*IO(1,main,12) - 1010*IO(1,lux,1) - 1010*IO(1,lux,2) - 1010*IO(1,lux,3) - 1010*IO(1,lux,4) - 1010*IO(1,lux,5) - 1010*IO(1,lux,6) - 1010*IO(1,lux,7) - 1010*IO(1,lux,8) - 1010*IO(1,lux,9) - 1010*IO(1,lux,10)
+     
+      - 1010*IO(1,lux,11) - 1010*IO(1,lux,12) - 1010*IO(1,student,1) - 1010*IO(1,student,2) - 1010*IO(1,student,3) - 1010*IO(1,student,4) - 1010*IO(1,student,5) - 1010*IO(1,student,6) - 1010*IO(1,student,7) - 1010*IO(1,student,8) - 1010*IO(1,student,9)
+     
+      - 1010*IO(1,student,10) - 1010*IO(1,student,11) - 1010*IO(1,student,12) - 1020*IO(2,main,1) - 1020*IO(2,main,2) - 1020*IO(2,main,3) - 1020*IO(2,main,4) - 1020*IO(2,main,5) - 1020*IO(2,main,6) - 1020*IO(2,main,7) - 1020*IO(2,main,8)
+     
+      - 1020*IO(2,main,9) - 1020*IO(2,main,10) - 1020*IO(2,main,11) - 1020*IO(2,main,12) - 1020*IO(2,lux,1) - 1020*IO(2,lux,2) - 1020*IO(2,lux,3) - 1020*IO(2,lux,4) - 1020*IO(2,lux,5) - 1020*IO(2,lux,6) - 1020*IO(2,lux,7) - 1020*IO(2,lux,8)
+     
+      - 1020*IO(2,lux,9) - 1020*IO(2,lux,10) - 1020*IO(2,lux,11) - 1020*IO(2,lux,12) - 1020*IO(2,student,1) - 1020*IO(2,student,2) - 1020*IO(2,student,3) - 1020*IO(2,student,4) - 1020*IO(2,student,5) - 1020*IO(2,student,6) - 1020*IO(2,student,7)
+     
+      - 1020*IO(2,student,8) - 1020*IO(2,student,9) - 1020*IO(2,student,10) - 1020*IO(2,student,11) - 1020*IO(2,student,12) - 1015*IO(3,main,1) - 1015*IO(3,main,2) - 1015*IO(3,main,3) - 1015*IO(3,main,4) - 1015*IO(3,main,5) - 1015*IO(3,main,6)
+     
+      - 1015*IO(3,main,7) - 1015*IO(3,main,8) - 1015*IO(3,main,9) - 1015*IO(3,main,10) - 1015*IO(3,main,11) - 1015*IO(3,main,12) - 1015*IO(3,lux,1) - 1015*IO(3,lux,2) - 1015*IO(3,lux,3) - 1015*IO(3,lux,4) - 1015*IO(3,lux,5) - 1015*IO(3,lux,6)
+     
+      - 1015*IO(3,lux,7) - 1015*IO(3,lux,8) - 1015*IO(3,lux,9) - 1015*IO(3,lux,10) - 1015*IO(3,lux,11) - 1015*IO(3,lux,12) - 1015*IO(3,student,1) - 1015*IO(3,student,2) - 1015*IO(3,student,3) - 1015*IO(3,student,4) - 1015*IO(3,student,5)
+     
+      - 1015*IO(3,student,6) - 1015*IO(3,student,7) - 1015*IO(3,student,8) - 1015*IO(3,student,9) - 1015*IO(3,student,10) - 1015*IO(3,student,11) - 1015*IO(3,student,12) - 20*CAP(1,small) - 30*CAP(1,medium) - 40*CAP(1,large) - 20*CAP(2,small)
+     
+      - 30*CAP(2,medium) - 40*CAP(2,large) - 20*CAP(3,small) - 30*CAP(3,medium) - 40*CAP(3,large) - 50*TOU(1,small) - 50*TOU(1,medium) - 50*TOU(1,large) - 50*TOU(2,small) - 50*TOU(2,medium) - 50*TOU(2,large) - 50*TOU(3,small) - 50*TOU(3,medium)
+     
+      - 50*TOU(3,large) - 5*Q(1,main,1) - 5*Q(1,main,2) - 5*Q(1,main,3) - 5*Q(1,main,4) - 5*Q(1,main,5) - 5*Q(1,main,6) - 5*Q(1,main,7) - 5*Q(1,main,8) - 5*Q(1,main,9) - 5*Q(1,main,10) - 5*Q(1,main,11) - 5*Q(1,main,12) - 15*Q(1,lux,1) - 15*Q(1,lux,2)
+     
+      - 15*Q(1,lux,3) - 15*Q(1,lux,4) - 15*Q(1,lux,5) - 15*Q(1,lux,6) - 15*Q(1,lux,7) - 15*Q(1,lux,8) - 15*Q(1,lux,9) - 15*Q(1,lux,10) - 15*Q(1,lux,11) - 15*Q(1,lux,12) - 6*Q(1,student,1) - 6*Q(1,student,2) - 6*Q(1,student,3) - 6*Q(1,student,4)
+     
+      - 6*Q(1,student,5) - 6*Q(1,student,6) - 6*Q(1,student,7) - 6*Q(1,student,8) - 6*Q(1,student,9) - 6*Q(1,student,10) - 6*Q(1,student,11) - 6*Q(1,student,12) - 5*Q(2,main,1) - 5*Q(2,main,2) - 5*Q(2,main,3) - 5*Q(2,main,4) - 5*Q(2,main,5)
+     
+      - 5*Q(2,main,6) - 5*Q(2,main,7) - 5*Q(2,main,8) - 5*Q(2,main,9) - 5*Q(2,main,10) - 5*Q(2,main,11) - 5*Q(2,main,12) - 15*Q(2,lux,1) - 15*Q(2,lux,2) - 15*Q(2,lux,3) - 15*Q(2,lux,4) - 15*Q(2,lux,5) - 15*Q(2,lux,6) - 15*Q(2,lux,7) - 15*Q(2,lux,8)
+     
+      - 15*Q(2,lux,9) - 15*Q(2,lux,10) - 15*Q(2,lux,11) - 15*Q(2,lux,12) - 6*Q(2,student,1) - 6*Q(2,student,2) - 6*Q(2,student,3) - 6*Q(2,student,4) - 6*Q(2,student,5) - 6*Q(2,student,6) - 6*Q(2,student,7) - 6*Q(2,student,8) - 6*Q(2,student,9)
+     
+      - 6*Q(2,student,10) - 6*Q(2,student,11) - 6*Q(2,student,12) - 5*Q(3,main,1) - 5*Q(3,main,2) - 5*Q(3,main,3) - 5*Q(3,main,4) - 5*Q(3,main,5) - 5*Q(3,main,6) - 5*Q(3,main,7) - 5*Q(3,main,8) - 5*Q(3,main,9) - 5*Q(3,main,10) - 5*Q(3,main,11)
+     
+      - 5*Q(3,main,12) - 15*Q(3,lux,1) - 15*Q(3,lux,2) - 15*Q(3,lux,3) - 15*Q(3,lux,4) - 15*Q(3,lux,5) - 15*Q(3,lux,6) - 15*Q(3,lux,7) - 15*Q(3,lux,8) - 15*Q(3,lux,9) - 15*Q(3,lux,10) - 15*Q(3,lux,11) - 15*Q(3,lux,12) - 6*Q(3,student,1) - 6*Q(3,student,2)
+     
+      - 6*Q(3,student,3) - 6*Q(3,student,4) - 6*Q(3,student,5) - 6*Q(3,student,6) - 6*Q(3,student,7) - 6*Q(3,student,8) - 6*Q(3,student,9) - 6*Q(3,student,10) - 6*Q(3,student,11) - 6*Q(3,student,12) + 15*SA(1,main,1) + 15*SA(1,main,2) + 15*SA(1,main,3)
+     
+      + 15*SA(1,main,4) + 15*SA(1,main,5) + 15*SA(1,main,6) + 15*SA(1,main,7) + 15*SA(1,main,8) + 15*SA(1,main,9) + 15*SA(1,main,10) + 15*SA(1,main,11) + 15*SA(1,main,12) + 30*SA(1,lux,1) + 30*SA(1,lux,2) + 30*SA(1,lux,3) + 30*SA(1,lux,4) + 30*SA(1,lux,5)
+     
+      + 30*SA(1,lux,6) + 30*SA(1,lux,7) + 30*SA(1,lux,8) + 30*SA(1,lux,9) + 30*SA(1,lux,10) + 30*SA(1,lux,11) + 30*SA(1,lux,12) + 12*SA(1,student,1) + 12*SA(1,student,2) + 12*SA(1,student,3) + 12*SA(1,student,4) + 12*SA(1,student,5) + 12*SA(1,student,6)
+     
+      + 12*SA(1,student,7) + 12*SA(1,student,8) + 12*SA(1,student,9) + 12*SA(1,student,10) + 12*SA(1,student,11) + 12*SA(1,student,12) + 15*SA(2,main,1) + 15*SA(2,main,2) + 15*SA(2,main,3) + 15*SA(2,main,4) + 15*SA(2,main,5) + 15*SA(2,main,6)
+     
+      + 15*SA(2,main,7) + 15*SA(2,main,8) + 15*SA(2,main,9) + 15*SA(2,main,10) + 15*SA(2,main,11) + 15*SA(2,main,12) + 30*SA(2,lux,1) + 30*SA(2,lux,2) + 30*SA(2,lux,3) + 30*SA(2,lux,4) + 30*SA(2,lux,5) + 30*SA(2,lux,6) + 30*SA(2,lux,7) + 30*SA(2,lux,8)
+     
+      + 30*SA(2,lux,9) + 30*SA(2,lux,10) + 30*SA(2,lux,11) + 30*SA(2,lux,12) + 12*SA(2,student,1) + 12*SA(2,student,2) + 12*SA(2,student,3) + 12*SA(2,student,4) + 12*SA(2,student,5) + 12*SA(2,student,6) + 12*SA(2,student,7) + 12*SA(2,student,8)
+     
+      + 12*SA(2,student,9) + 12*SA(2,student,10) + 12*SA(2,student,11) + 12*SA(2,student,12) + 15*SA(3,main,1) + 15*SA(3,main,2) + 15*SA(3,main,3) + 15*SA(3,main,4) + 15*SA(3,main,5) + 15*SA(3,main,6) + 15*SA(3,main,7) + 15*SA(3,main,8) + 15*SA(3,main,9)
+     
+      + 15*SA(3,main,10) + 15*SA(3,main,11) + 15*SA(3,main,12) + 30*SA(3,lux,1) + 30*SA(3,lux,2) + 30*SA(3,lux,3) + 30*SA(3,lux,4) + 30*SA(3,lux,5) + 30*SA(3,lux,6) + 30*SA(3,lux,7) + 30*SA(3,lux,8) + 30*SA(3,lux,9) + 30*SA(3,lux,10) + 30*SA(3,lux,11)
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE Project Using MIP From line 71
+
+
+     obj  =E=       
+     
+      + 30*SA(3,lux,12) + 12*SA(3,student,1) + 12*SA(3,student,2) + 12*SA(3,student,3) + 12*SA(3,student,4) + 12*SA(3,student,5) + 12*SA(3,student,6) + 12*SA(3,student,7) + 12*SA(3,student,8) + 12*SA(3,student,9) + 12*SA(3,student,10)
+     
+      + 12*SA(3,student,11) + 12*SA(3,student,12) - 20*IN(1,main,1) - 20*IN(1,main,2) - 20*IN(1,main,3) - 20*IN(1,main,4) - 20*IN(1,main,5) - 20*IN(1,main,6) - 20*IN(1,main,7) - 20*IN(1,main,8) - 20*IN(1,main,9) - 20*IN(1,main,10) - 20*IN(1,main,11)
+     
+      - 20*IN(1,main,12) - 15*IN(1,lux,1) - 15*IN(1,lux,2) - 15*IN(1,lux,3) - 15*IN(1,lux,4) - 15*IN(1,lux,5) - 15*IN(1,lux,6) - 15*IN(1,lux,7) - 15*IN(1,lux,8) - 15*IN(1,lux,9) - 15*IN(1,lux,10) - 15*IN(1,lux,11) - 15*IN(1,lux,12) - 25*IN(1,student,1)
+     
+      - 25*IN(1,student,2) - 25*IN(1,student,3) - 25*IN(1,student,4) - 25*IN(1,student,5) - 25*IN(1,student,6) - 25*IN(1,student,7) - 25*IN(1,student,8) - 25*IN(1,student,9) - 25*IN(1,student,10) - 25*IN(1,student,11) - 25*IN(1,student,12)
+     
+      - 20*IN(2,main,1) - 20*IN(2,main,2) - 20*IN(2,main,3) - 20*IN(2,main,4) - 20*IN(2,main,5) - 20*IN(2,main,6) - 20*IN(2,main,7) - 20*IN(2,main,8) - 20*IN(2,main,9) - 20*IN(2,main,10) - 20*IN(2,main,11) - 20*IN(2,main,12) - 15*IN(2,lux,1)
+     
+      - 15*IN(2,lux,2) - 15*IN(2,lux,3) - 15*IN(2,lux,4) - 15*IN(2,lux,5) - 15*IN(2,lux,6) - 15*IN(2,lux,7) - 15*IN(2,lux,8) - 15*IN(2,lux,9) - 15*IN(2,lux,10) - 15*IN(2,lux,11) - 15*IN(2,lux,12) - 25*IN(2,student,1) - 25*IN(2,student,2)
+     
+      - 25*IN(2,student,3) - 25*IN(2,student,4) - 25*IN(2,student,5) - 25*IN(2,student,6) - 25*IN(2,student,7) - 25*IN(2,student,8) - 25*IN(2,student,9) - 25*IN(2,student,10) - 25*IN(2,student,11) - 25*IN(2,student,12) - 20*IN(3,main,1) - 20*IN(3,main,2)
+     
+      - 20*IN(3,main,3) - 20*IN(3,main,4) - 20*IN(3,main,5) - 20*IN(3,main,6) - 20*IN(3,main,7) - 20*IN(3,main,8) - 20*IN(3,main,9) - 20*IN(3,main,10) - 20*IN(3,main,11) - 20*IN(3,main,12) - 15*IN(3,lux,1) - 15*IN(3,lux,2) - 15*IN(3,lux,3)
+     
+      - 15*IN(3,lux,4) - 15*IN(3,lux,5) - 15*IN(3,lux,6) - 15*IN(3,lux,7) - 15*IN(3,lux,8) - 15*IN(3,lux,9) - 15*IN(3,lux,10) - 15*IN(3,lux,11) - 15*IN(3,lux,12) - 25*IN(3,student,1) - 25*IN(3,student,2) - 25*IN(3,student,3) - 25*IN(3,student,4)
+     
+      - 25*IN(3,student,5) - 25*IN(3,student,6) - 25*IN(3,student,7) - 25*IN(3,student,8) - 25*IN(3,student,9) - 25*IN(3,student,10) - 25*IN(3,student,11) - 25*IN(3,student,12) - 10*SH(1,main,1) - 10*SH(1,main,2) - 10*SH(1,main,3) - 10*SH(1,main,4)
+     
+      - 10*SH(1,main,5) - 10*SH(1,main,6) - 10*SH(1,main,7) - 10*SH(1,main,8) - 10*SH(1,main,9) - 10*SH(1,main,10) - 10*SH(1,main,11) - 10*SH(1,main,12) - 15*SH(1,lux,1) - 15*SH(1,lux,2) - 15*SH(1,lux,3) - 15*SH(1,lux,4) - 15*SH(1,lux,5) - 15*SH(1,lux,6)
+     
+      - 15*SH(1,lux,7) - 15*SH(1,lux,8) - 15*SH(1,lux,9) - 15*SH(1,lux,10) - 15*SH(1,lux,11) - 15*SH(1,lux,12) - 30*SH(1,student,1) - 30*SH(1,student,2) - 30*SH(1,student,3) - 30*SH(1,student,4) - 30*SH(1,student,5) - 30*SH(1,student,6)
+     
+      - 30*SH(1,student,7) - 30*SH(1,student,8) - 30*SH(1,student,9) - 30*SH(1,student,10) - 30*SH(1,student,11) - 30*SH(1,student,12) - 10*SH(2,main,1) - 10*SH(2,main,2) - 10*SH(2,main,3) - 10*SH(2,main,4) - 10*SH(2,main,5) - 10*SH(2,main,6)
+     
+      - 10*SH(2,main,7) - 10*SH(2,main,8) - 10*SH(2,main,9) - 10*SH(2,main,10) - 10*SH(2,main,11) - 10*SH(2,main,12) - 15*SH(2,lux,1) - 15*SH(2,lux,2) - 15*SH(2,lux,3) - 15*SH(2,lux,4) - 15*SH(2,lux,5) - 15*SH(2,lux,6) - 15*SH(2,lux,7) - 15*SH(2,lux,8)
+     
+      - 15*SH(2,lux,9) - 15*SH(2,lux,10) - 15*SH(2,lux,11) - 15*SH(2,lux,12) - 30*SH(2,student,1) - 30*SH(2,student,2) - 30*SH(2,student,3) - 30*SH(2,student,4) - 30*SH(2,student,5) - 30*SH(2,student,6) - 30*SH(2,student,7) - 30*SH(2,student,8)
+     
+      - 30*SH(2,student,9) - 30*SH(2,student,10) - 30*SH(2,student,11) - 30*SH(2,student,12) - 10*SH(3,main,1) - 10*SH(3,main,2) - 10*SH(3,main,3) - 10*SH(3,main,4) - 10*SH(3,main,5) - 10*SH(3,main,6) - 10*SH(3,main,7) - 10*SH(3,main,8) - 10*SH(3,main,9)
+     
+      - 10*SH(3,main,10) - 10*SH(3,main,11) - 10*SH(3,main,12) - 15*SH(3,lux,1) - 15*SH(3,lux,2) - 15*SH(3,lux,3) - 15*SH(3,lux,4) - 15*SH(3,lux,5) - 15*SH(3,lux,6) - 15*SH(3,lux,7) - 15*SH(3,lux,8) - 15*SH(3,lux,9) - 15*SH(3,lux,10) - 15*SH(3,lux,11)
+     
+      - 15*SH(3,lux,12) - 30*SH(3,student,1) - 30*SH(3,student,2) - 30*SH(3,student,3) - 30*SH(3,student,4) - 30*SH(3,student,5) - 30*SH(3,student,6) - 30*SH(3,student,7) - 30*SH(3,student,8) - 30*SH(3,student,9) - 30*SH(3,student,10)
+     
+      - 30*SH(3,student,11) - 30*SH(3,student,12) + z =E= 0 ; (LHS = 0)
+     
+
+---- TOU_L_CH  =L=  
+
+TOU_L_CH(1)..  - CH(1) + TOU(1,small) + TOU(1,medium) + TOU(1,large) =L= 0 ; (LHS = 0)
+     
+TOU_L_CH(2)..  - CH(2) + TOU(2,small) + TOU(2,medium) + TOU(2,large) =L= 0 ; (LHS = 0)
+     
+TOU_L_CH(3)..  - CH(3) + TOU(3,small) + TOU(3,medium) + TOU(3,large) =L= 0 ; (LHS = 0)
+     
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE Project Using MIP From line 71
+
+
+---- CAP_L_CH  =E=  
+
+CAP_L_CH(1)..  - CH(1) + CAP(1,small) + CAP(1,medium) + CAP(1,large) =E= 0 ; (LHS = 0)
+     
+CAP_L_CH(2)..  - CH(2) + CAP(2,small) + CAP(2,medium) + CAP(2,large) =E= 0 ; (LHS = 0)
+     
+CAP_L_CH(3)..  - CH(3) + CAP(3,small) + CAP(3,medium) + CAP(3,large) =E= 0 ; (LHS = 0)
+     
+
+---- IN_BALANCE  =E=  
+
+IN_BALANCE(1,main,1)..  Q(1,main,1) - SA(1,main,1) - IN(1,main,1) =E= 0 ; (LHS = 0)
+     
+IN_BALANCE(1,main,2)..  Q(1,main,2) - SA(1,main,2) - IN(1,main,2) =E= 0 ; (LHS = 0)
+     
+IN_BALANCE(1,main,3)..  Q(1,main,3) - SA(1,main,3) - IN(1,main,3) =E= 0 ; (LHS = 0)
+     
+REMAINING 105 ENTRIES SKIPPED
+
+
+---- SELLING  =E=  
+
+SELLING(1,main,1)..  - 100*CAP(1,small) - 120*CAP(1,medium) - 140*CAP(1,large) - 550*TOU(1,small) - 650*TOU(1,medium) - 900*TOU(1,large) + SA(1,main,1) + SH(1,main,1) =E= 0 ; (LHS = 0)
+     
+SELLING(1,main,2)..  - 100*CAP(1,small) - 120*CAP(1,medium) - 140*CAP(1,large) - 660*TOU(1,small) - 780*TOU(1,medium) - 1080*TOU(1,large) + SA(1,main,2) + SH(1,main,2) =E= 0 ; (LHS = 0)
+     
+SELLING(1,main,3)..  - 100*CAP(1,small) - 120*CAP(1,medium) - 140*CAP(1,large) - 715*TOU(1,small) - 845*TOU(1,medium) - 1170*TOU(1,large) + SA(1,main,3) + SH(1,main,3) =E= 0 ; (LHS = 0)
+     
+REMAINING 105 ENTRIES SKIPPED
+
+
+---- ISORDER  =L=  
+
+ISORDER(1,main,1)..  - 100000000*IO(1,main,1) + Q(1,main,1) =L= 0 ; (LHS = 0)
+     
+ISORDER(1,main,2)..  - 100000000*IO(1,main,2) + Q(1,main,2) =L= 0 ; (LHS = 0)
+     
+ISORDER(1,main,3)..  - 100000000*IO(1,main,3) + Q(1,main,3) =L= 0 ; (LHS = 0)
+     
+REMAINING 105 ENTRIES SKIPPED
+
+
+---- CAPACITY  =L=  
+
+CAPACITY(1,1)..  - 2000*CAP(1,small) - 3000*CAP(1,medium) - 4000*CAP(1,large) + 4*Q(1,main,1) + 5*Q(1,lux,1) + 2*Q(1,student,1) + 4*IN(1,main,1) + 5*IN(1,lux,1) + 2*IN(1,student,1) =L= 0 ; (LHS = 0)
+     
+CAPACITY(1,2)..  - 2000*CAP(1,small) - 3000*CAP(1,medium) - 4000*CAP(1,large) + 4*Q(1,main,2) + 5*Q(1,lux,2) + 2*Q(1,student,2) + 4*IN(1,main,2) + 5*IN(1,lux,2) + 2*IN(1,student,2) =L= 0 ; (LHS = 0)
+     
+CAPACITY(1,3)..  - 2000*CAP(1,small) - 3000*CAP(1,medium) - 4000*CAP(1,large) + 4*Q(1,main,3) + 5*Q(1,lux,3) + 2*Q(1,student,3) + 4*IN(1,main,3) + 5*IN(1,lux,3) + 2*IN(1,student,3) =L= 0 ; (LHS = 0)
+     
+REMAINING 33 ENTRIES SKIPPED
+
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE Project Using MIP From line 71
+
+
+---- CHSH  =L=  
+
+CHSH(1)..  - 10000000*CH(1) + SH(1,main,1) + SH(1,main,2) + SH(1,main,3) + SH(1,main,4) + SH(1,main,5) + SH(1,main,6) + SH(1,main,7) + SH(1,main,8) + SH(1,main,9) + SH(1,main,10) + SH(1,main,11) + SH(1,main,12) + SH(1,lux,1) + SH(1,lux,2) + SH(1,lux,3)
+     
+      + SH(1,lux,4) + SH(1,lux,5) + SH(1,lux,6) + SH(1,lux,7) + SH(1,lux,8) + SH(1,lux,9) + SH(1,lux,10) + SH(1,lux,11) + SH(1,lux,12) + SH(1,student,1) + SH(1,student,2) + SH(1,student,3) + SH(1,student,4) + SH(1,student,5) + SH(1,student,6)
+     
+      + SH(1,student,7) + SH(1,student,8) + SH(1,student,9) + SH(1,student,10) + SH(1,student,11) + SH(1,student,12) =L= 0 ; (LHS = 0)
+     
+CHSH(2)..  - 10000000*CH(2) + SH(2,main,1) + SH(2,main,2) + SH(2,main,3) + SH(2,main,4) + SH(2,main,5) + SH(2,main,6) + SH(2,main,7) + SH(2,main,8) + SH(2,main,9) + SH(2,main,10) + SH(2,main,11) + SH(2,main,12) + SH(2,lux,1) + SH(2,lux,2) + SH(2,lux,3)
+     
+      + SH(2,lux,4) + SH(2,lux,5) + SH(2,lux,6) + SH(2,lux,7) + SH(2,lux,8) + SH(2,lux,9) + SH(2,lux,10) + SH(2,lux,11) + SH(2,lux,12) + SH(2,student,1) + SH(2,student,2) + SH(2,student,3) + SH(2,student,4) + SH(2,student,5) + SH(2,student,6)
+     
+      + SH(2,student,7) + SH(2,student,8) + SH(2,student,9) + SH(2,student,10) + SH(2,student,11) + SH(2,student,12) =L= 0 ; (LHS = 0)
+     
+CHSH(3)..  - 10000000*CH(3) + SH(3,main,1) + SH(3,main,2) + SH(3,main,3) + SH(3,main,4) + SH(3,main,5) + SH(3,main,6) + SH(3,main,7) + SH(3,main,8) + SH(3,main,9) + SH(3,main,10) + SH(3,main,11) + SH(3,main,12) + SH(3,lux,1) + SH(3,lux,2) + SH(3,lux,3)
+     
+      + SH(3,lux,4) + SH(3,lux,5) + SH(3,lux,6) + SH(3,lux,7) + SH(3,lux,8) + SH(3,lux,9) + SH(3,lux,10) + SH(3,lux,11) + SH(3,lux,12) + SH(3,student,1) + SH(3,student,2) + SH(3,student,3) + SH(3,student,4) + SH(3,student,5) + SH(3,student,6)
+     
+      + SH(3,student,7) + SH(3,student,8) + SH(3,student,9) + SH(3,student,10) + SH(3,student,11) + SH(3,student,12) =L= 0 ; (LHS = 0)
+     
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+---- CH  
+
+CH(1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -50       obj
+       -1       TOU_L_CH(1)
+       -1       CAP_L_CH(1)
+  -1.000000E+7  CHSH(1)
+
+CH(2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+     -120       obj
+       -1       TOU_L_CH(2)
+       -1       CAP_L_CH(2)
+  -1.000000E+7  CHSH(2)
+
+CH(3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+     -240       obj
+       -1       TOU_L_CH(3)
+       -1       CAP_L_CH(3)
+  -1.000000E+7  CHSH(3)
+
+
+---- IO  
+
+IO(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+    -1010       obj
+  -1.000000E+8  ISORDER(1,main,1)
+
+IO(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+    -1010       obj
+  -1.000000E+8  ISORDER(1,main,2)
+
+IO(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+    -1010       obj
+  -1.000000E+8  ISORDER(1,main,3)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- CAP  
+
+CAP(1,small)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -20       obj
+        1       CAP_L_CH(1)
+     -100       SELLING(1,main,1)
+     -100       SELLING(1,main,2)
+     -100       SELLING(1,main,3)
+     -100       SELLING(1,main,4)
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+     CAP  
+
+     -100       SELLING(1,main,5)
+     -100       SELLING(1,main,6)
+     -100       SELLING(1,main,7)
+     -100       SELLING(1,main,8)
+     -100       SELLING(1,main,9)
+     -100       SELLING(1,main,10)
+     -100       SELLING(1,main,11)
+     -100       SELLING(1,main,12)
+      -90       SELLING(1,lux,1)
+      -90       SELLING(1,lux,2)
+      -90       SELLING(1,lux,3)
+      -90       SELLING(1,lux,4)
+      -90       SELLING(1,lux,5)
+      -90       SELLING(1,lux,6)
+      -90       SELLING(1,lux,7)
+      -90       SELLING(1,lux,8)
+      -90       SELLING(1,lux,9)
+      -90       SELLING(1,lux,10)
+      -90       SELLING(1,lux,11)
+      -90       SELLING(1,lux,12)
+      -50       SELLING(1,student,1)
+      -50       SELLING(1,student,2)
+      -50       SELLING(1,student,3)
+      -50       SELLING(1,student,4)
+      -50       SELLING(1,student,5)
+      -50       SELLING(1,student,6)
+      -50       SELLING(1,student,7)
+      -50       SELLING(1,student,8)
+      -50       SELLING(1,student,9)
+      -50       SELLING(1,student,10)
+      -50       SELLING(1,student,11)
+      -50       SELLING(1,student,12)
+    -2000       CAPACITY(1,1)
+    -2000       CAPACITY(1,2)
+    -2000       CAPACITY(1,3)
+    -2000       CAPACITY(1,4)
+    -2000       CAPACITY(1,5)
+    -2000       CAPACITY(1,6)
+    -2000       CAPACITY(1,7)
+    -2000       CAPACITY(1,8)
+    -2000       CAPACITY(1,9)
+    -2000       CAPACITY(1,10)
+    -2000       CAPACITY(1,11)
+    -2000       CAPACITY(1,12)
+
+CAP(1,medium)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -30       obj
+        1       CAP_L_CH(1)
+     -120       SELLING(1,main,1)
+     -120       SELLING(1,main,2)
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                    03/06/18 16:01:09 Page 9
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+     CAP  
+
+     -120       SELLING(1,main,3)
+     -120       SELLING(1,main,4)
+     -120       SELLING(1,main,5)
+     -120       SELLING(1,main,6)
+     -120       SELLING(1,main,7)
+     -120       SELLING(1,main,8)
+     -120       SELLING(1,main,9)
+     -120       SELLING(1,main,10)
+     -120       SELLING(1,main,11)
+     -120       SELLING(1,main,12)
+     -100       SELLING(1,lux,1)
+     -100       SELLING(1,lux,2)
+     -100       SELLING(1,lux,3)
+     -100       SELLING(1,lux,4)
+     -100       SELLING(1,lux,5)
+     -100       SELLING(1,lux,6)
+     -100       SELLING(1,lux,7)
+     -100       SELLING(1,lux,8)
+     -100       SELLING(1,lux,9)
+     -100       SELLING(1,lux,10)
+     -100       SELLING(1,lux,11)
+     -100       SELLING(1,lux,12)
+      -70       SELLING(1,student,1)
+      -70       SELLING(1,student,2)
+      -70       SELLING(1,student,3)
+      -70       SELLING(1,student,4)
+      -70       SELLING(1,student,5)
+      -70       SELLING(1,student,6)
+      -70       SELLING(1,student,7)
+      -70       SELLING(1,student,8)
+      -70       SELLING(1,student,9)
+      -70       SELLING(1,student,10)
+      -70       SELLING(1,student,11)
+      -70       SELLING(1,student,12)
+    -3000       CAPACITY(1,1)
+    -3000       CAPACITY(1,2)
+    -3000       CAPACITY(1,3)
+    -3000       CAPACITY(1,4)
+    -3000       CAPACITY(1,5)
+    -3000       CAPACITY(1,6)
+    -3000       CAPACITY(1,7)
+    -3000       CAPACITY(1,8)
+    -3000       CAPACITY(1,9)
+    -3000       CAPACITY(1,10)
+    -3000       CAPACITY(1,11)
+    -3000       CAPACITY(1,12)
+
+CAP(1,large)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -40       obj
+        1       CAP_L_CH(1)
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 10
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+     CAP  
+
+     -140       SELLING(1,main,1)
+     -140       SELLING(1,main,2)
+     -140       SELLING(1,main,3)
+     -140       SELLING(1,main,4)
+     -140       SELLING(1,main,5)
+     -140       SELLING(1,main,6)
+     -140       SELLING(1,main,7)
+     -140       SELLING(1,main,8)
+     -140       SELLING(1,main,9)
+     -140       SELLING(1,main,10)
+     -140       SELLING(1,main,11)
+     -140       SELLING(1,main,12)
+     -110       SELLING(1,lux,1)
+     -110       SELLING(1,lux,2)
+     -110       SELLING(1,lux,3)
+     -110       SELLING(1,lux,4)
+     -110       SELLING(1,lux,5)
+     -110       SELLING(1,lux,6)
+     -110       SELLING(1,lux,7)
+     -110       SELLING(1,lux,8)
+     -110       SELLING(1,lux,9)
+     -110       SELLING(1,lux,10)
+     -110       SELLING(1,lux,11)
+     -110       SELLING(1,lux,12)
+     -120       SELLING(1,student,1)
+     -120       SELLING(1,student,2)
+     -120       SELLING(1,student,3)
+     -120       SELLING(1,student,4)
+     -120       SELLING(1,student,5)
+     -120       SELLING(1,student,6)
+     -120       SELLING(1,student,7)
+     -120       SELLING(1,student,8)
+     -120       SELLING(1,student,9)
+     -120       SELLING(1,student,10)
+     -120       SELLING(1,student,11)
+     -120       SELLING(1,student,12)
+    -4000       CAPACITY(1,1)
+    -4000       CAPACITY(1,2)
+    -4000       CAPACITY(1,3)
+    -4000       CAPACITY(1,4)
+    -4000       CAPACITY(1,5)
+    -4000       CAPACITY(1,6)
+    -4000       CAPACITY(1,7)
+    -4000       CAPACITY(1,8)
+    -4000       CAPACITY(1,9)
+    -4000       CAPACITY(1,10)
+    -4000       CAPACITY(1,11)
+    -4000       CAPACITY(1,12)
+
+REMAINING 6 ENTRIES SKIPPED
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 11
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+---- TOU  
+
+TOU(1,small)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -50       obj
+        1       TOU_L_CH(1)
+     -550       SELLING(1,main,1)
+     -660       SELLING(1,main,2)
+     -715       SELLING(1,main,3)
+     -770       SELLING(1,main,4)
+     -495       SELLING(1,main,5)
+     -605       SELLING(1,main,6)
+     -880       SELLING(1,main,7)
+     -935       SELLING(1,main,8)
+     -990       SELLING(1,main,9)
+     -715       SELLING(1,main,10)
+     -770       SELLING(1,main,11)
+    -1100       SELLING(1,main,12)
+     -550       SELLING(1,lux,1)
+     -660       SELLING(1,lux,2)
+     -715       SELLING(1,lux,3)
+     -770       SELLING(1,lux,4)
+     -495       SELLING(1,lux,5)
+     -605       SELLING(1,lux,6)
+     -880       SELLING(1,lux,7)
+     -935       SELLING(1,lux,8)
+     -990       SELLING(1,lux,9)
+     -715       SELLING(1,lux,10)
+     -770       SELLING(1,lux,11)
+    -1100       SELLING(1,lux,12)
+     -550       SELLING(1,student,1)
+     -660       SELLING(1,student,2)
+     -715       SELLING(1,student,3)
+     -770       SELLING(1,student,4)
+     -495       SELLING(1,student,5)
+     -605       SELLING(1,student,6)
+     -880       SELLING(1,student,7)
+     -935       SELLING(1,student,8)
+     -990       SELLING(1,student,9)
+     -715       SELLING(1,student,10)
+     -770       SELLING(1,student,11)
+    -1100       SELLING(1,student,12)
+
+TOU(1,medium)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -50       obj
+        1       TOU_L_CH(1)
+     -650       SELLING(1,main,1)
+     -780       SELLING(1,main,2)
+     -845       SELLING(1,main,3)
+     -910       SELLING(1,main,4)
+     -585       SELLING(1,main,5)
+     -715       SELLING(1,main,6)
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 12
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+     TOU  
+
+    -1040       SELLING(1,main,7)
+    -1105       SELLING(1,main,8)
+    -1170       SELLING(1,main,9)
+     -845       SELLING(1,main,10)
+     -910       SELLING(1,main,11)
+    -1300       SELLING(1,main,12)
+     -650       SELLING(1,lux,1)
+     -780       SELLING(1,lux,2)
+     -845       SELLING(1,lux,3)
+     -910       SELLING(1,lux,4)
+     -585       SELLING(1,lux,5)
+     -715       SELLING(1,lux,6)
+    -1040       SELLING(1,lux,7)
+    -1105       SELLING(1,lux,8)
+    -1170       SELLING(1,lux,9)
+     -845       SELLING(1,lux,10)
+     -910       SELLING(1,lux,11)
+    -1300       SELLING(1,lux,12)
+     -650       SELLING(1,student,1)
+     -780       SELLING(1,student,2)
+     -845       SELLING(1,student,3)
+     -910       SELLING(1,student,4)
+     -585       SELLING(1,student,5)
+     -715       SELLING(1,student,6)
+    -1040       SELLING(1,student,7)
+    -1105       SELLING(1,student,8)
+    -1170       SELLING(1,student,9)
+     -845       SELLING(1,student,10)
+     -910       SELLING(1,student,11)
+    -1300       SELLING(1,student,12)
+
+TOU(1,large)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -50       obj
+        1       TOU_L_CH(1)
+     -900       SELLING(1,main,1)
+    -1080       SELLING(1,main,2)
+    -1170       SELLING(1,main,3)
+    -1260       SELLING(1,main,4)
+     -810       SELLING(1,main,5)
+     -990       SELLING(1,main,6)
+    -1440       SELLING(1,main,7)
+    -1530       SELLING(1,main,8)
+    -1620       SELLING(1,main,9)
+    -1170       SELLING(1,main,10)
+    -1260       SELLING(1,main,11)
+    -1800       SELLING(1,main,12)
+     -900       SELLING(1,lux,1)
+    -1080       SELLING(1,lux,2)
+    -1170       SELLING(1,lux,3)
+    -1260       SELLING(1,lux,4)
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 13
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+     TOU  
+
+     -810       SELLING(1,lux,5)
+     -990       SELLING(1,lux,6)
+    -1440       SELLING(1,lux,7)
+    -1530       SELLING(1,lux,8)
+    -1620       SELLING(1,lux,9)
+    -1170       SELLING(1,lux,10)
+    -1260       SELLING(1,lux,11)
+    -1800       SELLING(1,lux,12)
+     -900       SELLING(1,student,1)
+    -1080       SELLING(1,student,2)
+    -1170       SELLING(1,student,3)
+    -1260       SELLING(1,student,4)
+     -810       SELLING(1,student,5)
+     -990       SELLING(1,student,6)
+    -1440       SELLING(1,student,7)
+    -1530       SELLING(1,student,8)
+    -1620       SELLING(1,student,9)
+    -1170       SELLING(1,student,10)
+    -1260       SELLING(1,student,11)
+    -1800       SELLING(1,student,12)
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- Q  
+
+Q(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -5       obj
+        1       IN_BALANCE(1,main,1)
+        1       ISORDER(1,main,1)
+        4       CAPACITY(1,1)
+
+Q(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -5       obj
+        1       IN_BALANCE(1,main,2)
+        1       ISORDER(1,main,2)
+        4       CAPACITY(1,2)
+
+Q(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -5       obj
+        1       IN_BALANCE(1,main,3)
+        1       ISORDER(1,main,3)
+        4       CAPACITY(1,3)
+
+REMAINING 105 ENTRIES SKIPPED
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 14
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+---- SA  
+
+SA(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       15       obj
+       -1       IN_BALANCE(1,main,1)
+        1       SELLING(1,main,1)
+
+SA(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       15       obj
+       -1       IN_BALANCE(1,main,2)
+        1       SELLING(1,main,2)
+
+SA(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       15       obj
+       -1       IN_BALANCE(1,main,3)
+        1       SELLING(1,main,3)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- IN  
+
+IN(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -20       obj
+       -1       IN_BALANCE(1,main,1)
+        1       IN_BALANCE(2,main,1)
+        4       CAPACITY(1,1)
+
+IN(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -20       obj
+       -1       IN_BALANCE(1,main,2)
+        1       IN_BALANCE(2,main,2)
+        4       CAPACITY(1,2)
+
+IN(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -20       obj
+       -1       IN_BALANCE(1,main,3)
+        1       IN_BALANCE(2,main,3)
+        4       CAPACITY(1,3)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- SH  
+
+SH(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -10       obj
+        1       SELLING(1,main,1)
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 15
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+     SH  
+
+        1       CHSH(1)
+
+SH(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -10       obj
+        1       SELLING(1,main,2)
+        1       CHSH(1)
+
+SH(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -10       obj
+        1       SELLING(1,main,3)
+        1       CHSH(1)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- z  
+
+z
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       obj
+
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 16
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE Project Using MIP From line 71
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           8     SINGLE EQUATIONS          370
+BLOCKS OF VARIABLES           9     SINGLE VARIABLES          562
+NON ZERO ELEMENTS         2,497     DISCRETE VARIABLES        129
+
+
+GENERATION TIME      =        0.016 SECONDS      4 MB  24.1.2 r40979 WEX-WEI
+
+
+EXECUTION TIME       =        0.016 SECONDS      4 MB  24.1.2 r40979 WEX-WEI
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 17
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   Project             OBJECTIVE  z
+     TYPE    MIP                 DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  71
+
+**** SOLVER STATUS     1 Normal Completion         
+**** MODEL STATUS      8 Integer Solution          
+**** OBJECTIVE VALUE           -13010.0000
+
+ RESOURCE USAGE, LIMIT          1.731      1000.000
+ ITERATION COUNT, LIMIT     14188    2000000000
+
+IBM ILOG CPLEX   24.1.2 r40979 Released Jun 16, 2013 WEI x86_64/MS Windows    
+--- GAMS/Cplex licensed for continuous and discrete problems.
+Cplex 12.5.1.0
+
+MIP status(102): integer optimal, tolerance
+Cplex Time: 1.73sec (det. 1095.18 ticks)
+Fixing integer variables, and solving final LP...
+Fixed MIP status(1): optimal
+Cplex Time: 0.00sec (det. 0.52 ticks)
+Solution satisfies tolerances.
+
+MIP Solution:       -13010.000000    (14152 iterations, 3065 nodes)
+Final Solve:        -13010.000000    (36 iterations)
+
+Best possible:      -14100.170989
+Absolute gap:         1090.170989
+Relative gap:            0.083795
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj                 .              .              .             1.0000      
+
+---- EQU TOU_L_CH  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1        -INF           -1.0000          .              .          
+2        -INF             .              .              .          
+3        -INF           -1.0000          .              .          
+
+---- EQU CAP_L_CH  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1          .              .              .              .          
+2          .              .              .              .          
+3          .              .              .              .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 18
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+---- EQU IN_BALANCE  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .1           .              .              .             5.0000      
+1.main   .2           .              .              .             5.0000      
+1.main   .3           .              .              .             5.0000      
+1.main   .4           .              .              .             5.0000      
+1.main   .5           .              .              .             5.0000      
+1.main   .6           .              .              .             5.0000      
+1.main   .7           .              .              .             5.0000      
+1.main   .8           .              .              .             5.0000      
+1.main   .9           .              .              .             5.0000      
+1.main   .10          .              .              .             5.0000      
+1.main   .11          .              .              .             5.0000      
+1.main   .12          .              .              .             5.0000      
+1.lux    .1           .              .              .            15.0000      
+1.lux    .2           .              .              .            15.0000      
+1.lux    .3           .              .              .            15.0000      
+1.lux    .4           .              .              .            15.0000      
+1.lux    .5           .              .              .            15.0000      
+1.lux    .6           .              .              .            15.0000      
+1.lux    .7           .              .              .            15.0000      
+1.lux    .8           .              .              .            15.0000      
+1.lux    .9           .              .              .            15.0000      
+1.lux    .10          .              .              .            15.0000      
+1.lux    .11          .              .              .            15.0000      
+1.lux    .12          .              .              .            15.0000      
+1.student.1           .              .              .             6.0000      
+1.student.2           .              .              .             6.0000      
+1.student.3           .              .              .             6.0000      
+1.student.4           .              .              .             6.0000      
+1.student.5           .              .              .             6.0000      
+1.student.6           .              .              .             6.0000      
+1.student.7           .              .              .             6.0000      
+1.student.8           .              .              .             6.0000      
+1.student.9           .              .              .             6.0000      
+1.student.10          .              .              .             6.0000      
+1.student.11          .              .              .             6.0000      
+1.student.12          .              .              .             6.0000      
+2.main   .1           .              .              .              .          
+2.main   .2           .              .              .              .          
+2.main   .3           .              .              .              .          
+2.main   .4           .              .              .              .          
+2.main   .5           .              .              .              .          
+2.main   .6           .              .              .              .          
+2.main   .7           .              .              .              .          
+2.main   .8           .              .              .              .          
+2.main   .9           .              .              .              .          
+2.main   .10          .              .              .              .          
+2.main   .11          .              .              .              .          
+2.main   .12          .              .              .              .          
+2.lux    .1           .              .              .              .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 19
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     EQU IN_BALANCE  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+2.lux    .2           .              .              .              .          
+2.lux    .3           .              .              .              .          
+2.lux    .4           .              .              .              .          
+2.lux    .5           .              .              .              .          
+2.lux    .6           .              .              .              .          
+2.lux    .7           .              .              .              .          
+2.lux    .8           .              .              .              .          
+2.lux    .9           .              .              .              .          
+2.lux    .10          .              .              .              .          
+2.lux    .11          .              .              .              .          
+2.lux    .12          .              .              .              .          
+2.student.1           .              .              .              .          
+2.student.2           .              .              .              .          
+2.student.3           .              .              .              .          
+2.student.4           .              .              .              .          
+2.student.5           .              .              .              .          
+2.student.6           .              .              .              .          
+2.student.7           .              .              .              .          
+2.student.8           .              .              .              .          
+2.student.9           .              .              .              .          
+2.student.10          .              .              .              .          
+2.student.11          .              .              .              .          
+2.student.12          .              .              .              .          
+3.main   .1           .              .              .             5.0000      
+3.main   .2           .              .              .             5.0000      
+3.main   .3           .              .              .             5.0000      
+3.main   .4           .              .              .             5.0000      
+3.main   .5           .              .              .             5.0000      
+3.main   .6           .              .              .             5.0000      
+3.main   .7           .              .              .             5.0000      
+3.main   .8           .              .              .             5.0000      
+3.main   .9           .              .              .             5.0000      
+3.main   .10          .              .              .             5.0000      
+3.main   .11          .              .              .             5.0000      
+3.main   .12          .              .              .             5.0000      
+3.lux    .1           .              .              .            15.0000      
+3.lux    .2           .              .              .            15.0000      
+3.lux    .3           .              .              .            15.0000      
+3.lux    .4           .              .              .            15.0000      
+3.lux    .5           .              .              .            15.0000      
+3.lux    .6           .              .              .            15.0000      
+3.lux    .7           .              .              .            15.0000      
+3.lux    .8           .              .              .            15.0000      
+3.lux    .9           .              .              .            15.0000      
+3.lux    .10          .              .              .            15.0000      
+3.lux    .11          .              .              .            15.0000      
+3.lux    .12          .              .              .            15.0000      
+3.student.1           .              .              .             6.0000      
+3.student.2           .              .              .             6.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 20
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     EQU IN_BALANCE  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+3.student.3           .              .              .             6.0000      
+3.student.4           .              .              .             6.0000      
+3.student.5           .              .              .             6.0000      
+3.student.6           .              .              .             6.0000      
+3.student.7           .              .              .             6.0000      
+3.student.8           .              .              .             6.0000      
+3.student.9           .              .              .             6.0000      
+3.student.10          .              .              .             6.0000      
+3.student.11          .              .              .             6.0000      
+3.student.12          .              .              .             6.0000      
+
+---- EQU SELLING  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .1           .              .              .           -10.0000      
+1.main   .2           .              .              .           -10.0000      
+1.main   .3           .              .              .           -10.0000      
+1.main   .4           .              .              .           -10.0000      
+1.main   .5           .              .              .           -10.0000      
+1.main   .6           .              .              .           -10.0000      
+1.main   .7           .              .              .           -10.0000      
+1.main   .8           .              .              .           -10.0000      
+1.main   .9           .              .              .           -10.0000      
+1.main   .10          .              .              .           -10.0000      
+1.main   .11          .              .              .           -10.0000      
+1.main   .12          .              .              .           -10.0000      
+1.lux    .1           .              .              .           -15.0000      
+1.lux    .2           .              .              .           -15.0000      
+1.lux    .3           .              .              .           -15.0000      
+1.lux    .4           .              .              .           -15.0000      
+1.lux    .5           .              .              .           -15.0000      
+1.lux    .6           .              .              .           -15.0000      
+1.lux    .7           .              .              .           -15.0000      
+1.lux    .8           .              .              .           -15.0000      
+1.lux    .9           .              .              .           -15.0000      
+1.lux    .10          .              .              .           -15.0000      
+1.lux    .11          .              .              .           -15.0000      
+1.lux    .12          .              .              .           -15.0000      
+1.student.1           .              .              .            -6.0000      
+1.student.2           .              .              .            -6.0000      
+1.student.3           .              .              .            -6.0000      
+1.student.4           .              .              .            -6.0000      
+1.student.5           .              .              .            -6.0000      
+1.student.6           .              .              .            -6.0000      
+1.student.7           .              .              .            -6.0000      
+1.student.8           .              .              .            -6.0000      
+1.student.9           .              .              .            -6.0000      
+1.student.10          .              .              .            -6.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 21
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     EQU SELLING  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.student.11          .              .              .            -6.0000      
+1.student.12          .              .              .            -6.0000      
+2.main   .1           .              .              .           -15.0000      
+2.main   .2           .              .              .           -15.0000      
+2.main   .3           .              .              .           -15.0000      
+2.main   .4           .              .              .           -15.0000      
+2.main   .5           .              .              .           -15.0000      
+2.main   .6           .              .              .           -15.0000      
+2.main   .7           .              .              .           -15.0000      
+2.main   .8           .              .              .           -15.0000      
+2.main   .9           .              .              .           -15.0000      
+2.main   .10          .              .              .           -15.0000      
+2.main   .11          .              .              .           -15.0000      
+2.main   .12          .              .              .           -15.0000      
+2.lux    .1           .              .              .           -30.0000      
+2.lux    .2           .              .              .           -30.0000      
+2.lux    .3           .              .              .           -30.0000      
+2.lux    .4           .              .              .           -30.0000      
+2.lux    .5           .              .              .           -30.0000      
+2.lux    .6           .              .              .           -30.0000      
+2.lux    .7           .              .              .           -30.0000      
+2.lux    .8           .              .              .           -30.0000      
+2.lux    .9           .              .              .           -30.0000      
+2.lux    .10          .              .              .           -30.0000      
+2.lux    .11          .              .              .           -30.0000      
+2.lux    .12          .              .              .           -30.0000      
+2.student.1           .              .              .           -12.0000      
+2.student.2           .              .              .           -12.0000      
+2.student.3           .              .              .           -12.0000      
+2.student.4           .              .              .           -12.0000      
+2.student.5           .              .              .           -12.0000      
+2.student.6           .              .              .           -12.0000      
+2.student.7           .              .              .           -12.0000      
+2.student.8           .              .              .           -12.0000      
+2.student.9           .              .              .           -12.0000      
+2.student.10          .              .              .           -12.0000      
+2.student.11          .              .              .           -12.0000      
+2.student.12          .              .              .           -12.0000      
+3.main   .1           .              .              .           -10.0000      
+3.main   .2           .              .              .           -10.0000      
+3.main   .3           .              .              .           -10.0000      
+3.main   .4           .              .              .           -10.0000      
+3.main   .5           .              .              .           -10.0000      
+3.main   .6           .              .              .           -10.0000      
+3.main   .7           .              .              .           -10.0000      
+3.main   .8           .              .              .           -10.0000      
+3.main   .9           .              .              .           -10.0000      
+3.main   .10          .              .              .           -10.0000      
+3.main   .11          .              .              .           -10.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 22
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     EQU SELLING  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+3.main   .12          .              .              .           -10.0000      
+3.lux    .1           .              .              .           -15.0000      
+3.lux    .2           .              .              .           -15.0000      
+3.lux    .3           .              .              .           -15.0000      
+3.lux    .4           .              .              .           -15.0000      
+3.lux    .5           .              .              .           -15.0000      
+3.lux    .6           .              .              .           -15.0000      
+3.lux    .7           .              .              .           -15.0000      
+3.lux    .8           .              .              .           -15.0000      
+3.lux    .9           .              .              .           -15.0000      
+3.lux    .10          .              .              .           -15.0000      
+3.lux    .11          .              .              .           -15.0000      
+3.lux    .12          .              .              .           -15.0000      
+3.student.1           .              .              .            -6.0000      
+3.student.2           .              .              .            -6.0000      
+3.student.3           .              .              .            -6.0000      
+3.student.4           .              .              .            -6.0000      
+3.student.5           .              .              .            -6.0000      
+3.student.6           .              .              .            -6.0000      
+3.student.7           .              .              .            -6.0000      
+3.student.8           .              .              .            -6.0000      
+3.student.9           .              .              .            -6.0000      
+3.student.10          .              .              .            -6.0000      
+3.student.11          .              .              .            -6.0000      
+3.student.12          .              .              .            -6.0000      
+
+---- EQU ISORDER  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .1         -INF      -0.999999E+8          .              .          
+1.main   .2         -INF      -0.999999E+8          .              .          
+1.main   .3         -INF      -0.999999E+8          .              .          
+1.main   .4         -INF      -0.999999E+8          .              .          
+1.main   .5         -INF      -0.999999E+8          .              .          
+1.main   .6         -INF      -0.999999E+8          .              .          
+1.main   .7         -INF      -0.999999E+8          .              .          
+1.main   .8         -INF      -0.999999E+8          .              .          
+1.main   .9         -INF      -0.999999E+8          .              .          
+1.main   .10        -INF      -0.999999E+8          .              .          
+1.main   .11        -INF      -0.999999E+8          .              .          
+1.main   .12        -INF      -0.999999E+8          .              .          
+1.lux    .1         -INF      -0.999999E+8          .              .          
+1.lux    .2         -INF      -0.999999E+8          .              .          
+1.lux    .3         -INF      -0.999999E+8          .              .          
+1.lux    .4         -INF      -0.999999E+8          .              .          
+1.lux    .5         -INF      -0.999999E+8          .              .          
+1.lux    .6         -INF      -0.999999E+8          .              .          
+1.lux    .7         -INF      -0.999999E+8          .              .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 23
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     EQU ISORDER  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.lux    .8         -INF      -0.999999E+8          .              .          
+1.lux    .9         -INF      -0.999999E+8          .              .          
+1.lux    .10        -INF      -0.999999E+8          .              .          
+1.lux    .11        -INF      -0.999999E+8          .              .          
+1.lux    .12        -INF      -0.999999E+8          .              .          
+1.student.1         -INF      -0.999999E+8          .              .          
+1.student.2         -INF      -0.999999E+8          .              .          
+1.student.3         -INF      -0.999999E+8          .              .          
+1.student.4         -INF      -0.999999E+8          .              .          
+1.student.5         -INF      -0.999999E+8          .              .          
+1.student.6         -INF      -0.999999E+8          .              .          
+1.student.7         -INF      -0.999999E+8          .              .          
+1.student.8         -INF      -0.999999E+8          .              .          
+1.student.9         -INF      -0.999999E+8          .              .          
+1.student.10        -INF      -0.999999E+8          .              .          
+1.student.11        -INF      -0.999999E+8          .              .          
+1.student.12        -INF      -0.999999E+8          .              .          
+2.main   .1         -INF             .              .              .          
+2.main   .2         -INF             .              .              .          
+2.main   .3         -INF             .              .              .          
+2.main   .4         -INF             .              .              .          
+2.main   .5         -INF             .              .              .          
+2.main   .6         -INF             .              .              .          
+2.main   .7         -INF             .              .              .          
+2.main   .8         -INF             .              .              .          
+2.main   .9         -INF             .              .              .          
+2.main   .10        -INF             .              .              .          
+2.main   .11        -INF             .              .              .          
+2.main   .12        -INF             .              .              .          
+2.lux    .1         -INF             .              .              .          
+2.lux    .2         -INF             .              .              .          
+2.lux    .3         -INF             .              .              .          
+2.lux    .4         -INF             .              .              .          
+2.lux    .5         -INF             .              .              .          
+2.lux    .6         -INF             .              .              .          
+2.lux    .7         -INF             .              .              .          
+2.lux    .8         -INF             .              .              .          
+2.lux    .9         -INF             .              .              .          
+2.lux    .10        -INF             .              .              .          
+2.lux    .11        -INF             .              .              .          
+2.lux    .12        -INF             .              .              .          
+2.student.1         -INF             .              .              .          
+2.student.2         -INF             .              .              .          
+2.student.3         -INF             .              .              .          
+2.student.4         -INF             .              .              .          
+2.student.5         -INF             .              .              .          
+2.student.6         -INF             .              .              .          
+2.student.7         -INF             .              .              .          
+2.student.8         -INF             .              .              .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 24
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     EQU ISORDER  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+2.student.9         -INF             .              .              .          
+2.student.10        -INF             .              .              .          
+2.student.11        -INF             .              .              .          
+2.student.12        -INF             .              .              .          
+3.main   .1         -INF      -0.999999E+8          .              .          
+3.main   .2         -INF      -0.999999E+8          .              .          
+3.main   .3         -INF      -0.999999E+8          .              .          
+3.main   .4         -INF      -0.999999E+8          .              .          
+3.main   .5         -INF      -0.999999E+8          .              .          
+3.main   .6         -INF      -0.999999E+8          .              .          
+3.main   .7         -INF      -0.999999E+8          .              .          
+3.main   .8         -INF      -0.999999E+8          .              .          
+3.main   .9         -INF      -0.999999E+8          .              .          
+3.main   .10        -INF      -0.999999E+8          .              .          
+3.main   .11        -INF      -0.999999E+8          .              .          
+3.main   .12        -INF      -0.999999E+8          .              .          
+3.lux    .1         -INF      -0.999999E+8          .              .          
+3.lux    .2         -INF      -0.999999E+8          .              .          
+3.lux    .3         -INF      -0.999999E+8          .              .          
+3.lux    .4         -INF      -0.999999E+8          .              .          
+3.lux    .5         -INF      -0.999999E+8          .              .          
+3.lux    .6         -INF      -0.999999E+8          .              .          
+3.lux    .7         -INF      -0.999999E+8          .              .          
+3.lux    .8         -INF      -0.999999E+8          .              .          
+3.lux    .9         -INF      -0.999999E+8          .              .          
+3.lux    .10        -INF      -0.999999E+8          .              .          
+3.lux    .11        -INF      -0.999999E+8          .              .          
+3.lux    .12        -INF      -0.999999E+8          .              .          
+3.student.1         -INF      -0.999999E+8          .              .          
+3.student.2         -INF      -0.999999E+8          .              .          
+3.student.3         -INF      -0.999999E+8          .              .          
+3.student.4         -INF      -0.999999E+8          .              .          
+3.student.5         -INF      -0.999999E+8          .              .          
+3.student.6         -INF      -0.999999E+8          .              .          
+3.student.7         -INF      -0.999999E+8          .              .          
+3.student.8         -INF      -0.999999E+8          .              .          
+3.student.9         -INF      -0.999999E+8          .              .          
+3.student.10        -INF      -0.999999E+8          .              .          
+3.student.11        -INF      -0.999999E+8          .              .          
+3.student.12        -INF      -0.999999E+8          .              .          
+
+---- EQU CAPACITY  
+
+            LOWER          LEVEL          UPPER         MARGINAL
+
+1.1         -INF        -2650.0000          .              .          
+1.2         -INF        -2650.0000          .              .          
+1.3         -INF        -2650.0000          .              .          
+1.4         -INF        -2650.0000          .              .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 25
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     EQU CAPACITY  
+
+            LOWER          LEVEL          UPPER         MARGINAL
+
+1.5         -INF        -2650.0000          .              .          
+1.6         -INF        -2650.0000          .              .          
+1.7         -INF        -2650.0000          .              .          
+1.8         -INF        -2650.0000          .              .          
+1.9         -INF        -2650.0000          .              .          
+1.10        -INF        -2650.0000          .              .          
+1.11        -INF        -2650.0000          .              .          
+1.12        -INF        -2650.0000          .              .          
+2.1         -INF             .              .              .          
+2.2         -INF             .              .              .          
+2.3         -INF             .              .              .          
+2.4         -INF             .              .              .          
+2.5         -INF             .              .              .          
+2.6         -INF             .              .              .          
+2.7         -INF             .              .              .          
+2.8         -INF             .              .              .          
+2.9         -INF             .              .              .          
+2.10        -INF             .              .              .          
+2.11        -INF             .              .              .          
+2.12        -INF             .              .              .          
+3.1         -INF        -2790.0000          .              .          
+3.2         -INF        -2790.0000          .              .          
+3.3         -INF        -2790.0000          .              .          
+3.4         -INF        -2790.0000          .              .          
+3.5         -INF        -2790.0000          .              .          
+3.6         -INF        -2790.0000          .              .          
+3.7         -INF        -2790.0000          .              .          
+3.8         -INF        -2790.0000          .              .          
+3.9         -INF        -2790.0000          .              .          
+3.10        -INF        -2790.0000          .              .          
+3.11        -INF        -2790.0000          .              .          
+3.12        -INF        -2790.0000          .              .          
+
+---- EQU CHSH  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1        -INF      -1.000000E+7          .              .          
+2        -INF             .              .              .          
+3        -INF      -1.000000E+7          .              .          
+
+---- VAR CH  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1          .             1.0000         1.0000        50.0000      
+2          .              .             1.0000       120.0000      
+3          .             1.0000         1.0000       240.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 26
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+---- VAR IO  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .1           .             1.0000         1.0000      1010.0000      
+1.main   .2           .             1.0000         1.0000      1010.0000      
+1.main   .3           .             1.0000         1.0000      1010.0000      
+1.main   .4           .             1.0000         1.0000      1010.0000      
+1.main   .5           .             1.0000         1.0000      1010.0000      
+1.main   .6           .             1.0000         1.0000      1010.0000      
+1.main   .7           .             1.0000         1.0000      1010.0000      
+1.main   .8           .             1.0000         1.0000      1010.0000      
+1.main   .9           .             1.0000         1.0000      1010.0000      
+1.main   .10          .             1.0000         1.0000      1010.0000      
+1.main   .11          .             1.0000         1.0000      1010.0000      
+1.main   .12          .             1.0000         1.0000      1010.0000      
+1.lux    .1           .             1.0000         1.0000      1010.0000      
+1.lux    .2           .             1.0000         1.0000      1010.0000      
+1.lux    .3           .             1.0000         1.0000      1010.0000      
+1.lux    .4           .             1.0000         1.0000      1010.0000      
+1.lux    .5           .             1.0000         1.0000      1010.0000      
+1.lux    .6           .             1.0000         1.0000      1010.0000      
+1.lux    .7           .             1.0000         1.0000      1010.0000      
+1.lux    .8           .             1.0000         1.0000      1010.0000      
+1.lux    .9           .             1.0000         1.0000      1010.0000      
+1.lux    .10          .             1.0000         1.0000      1010.0000      
+1.lux    .11          .             1.0000         1.0000      1010.0000      
+1.lux    .12          .             1.0000         1.0000      1010.0000      
+1.student.1           .             1.0000         1.0000      1010.0000      
+1.student.2           .             1.0000         1.0000      1010.0000      
+1.student.3           .             1.0000         1.0000      1010.0000      
+1.student.4           .             1.0000         1.0000      1010.0000      
+1.student.5           .             1.0000         1.0000      1010.0000      
+1.student.6           .             1.0000         1.0000      1010.0000      
+1.student.7           .             1.0000         1.0000      1010.0000      
+1.student.8           .             1.0000         1.0000      1010.0000      
+1.student.9           .             1.0000         1.0000      1010.0000      
+1.student.10          .             1.0000         1.0000      1010.0000      
+1.student.11          .             1.0000         1.0000      1010.0000      
+1.student.12          .             1.0000         1.0000      1010.0000      
+2.main   .1           .              .             1.0000      1020.0000      
+2.main   .2           .              .             1.0000      1020.0000      
+2.main   .3           .              .             1.0000      1020.0000      
+2.main   .4           .              .             1.0000      1020.0000      
+2.main   .5           .              .             1.0000      1020.0000      
+2.main   .6           .              .             1.0000      1020.0000      
+2.main   .7           .              .             1.0000      1020.0000      
+2.main   .8           .              .             1.0000      1020.0000      
+2.main   .9           .              .             1.0000      1020.0000      
+2.main   .10          .              .             1.0000      1020.0000      
+2.main   .11          .              .             1.0000      1020.0000      
+2.main   .12          .              .             1.0000      1020.0000      
+2.lux    .1           .              .             1.0000      1020.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 27
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR IO  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+2.lux    .2           .              .             1.0000      1020.0000      
+2.lux    .3           .              .             1.0000      1020.0000      
+2.lux    .4           .              .             1.0000      1020.0000      
+2.lux    .5           .              .             1.0000      1020.0000      
+2.lux    .6           .              .             1.0000      1020.0000      
+2.lux    .7           .              .             1.0000      1020.0000      
+2.lux    .8           .              .             1.0000      1020.0000      
+2.lux    .9           .              .             1.0000      1020.0000      
+2.lux    .10          .              .             1.0000      1020.0000      
+2.lux    .11          .              .             1.0000      1020.0000      
+2.lux    .12          .              .             1.0000      1020.0000      
+2.student.1           .              .             1.0000      1020.0000      
+2.student.2           .              .             1.0000      1020.0000      
+2.student.3           .              .             1.0000      1020.0000      
+2.student.4           .              .             1.0000      1020.0000      
+2.student.5           .              .             1.0000      1020.0000      
+2.student.6           .              .             1.0000      1020.0000      
+2.student.7           .              .             1.0000      1020.0000      
+2.student.8           .              .             1.0000      1020.0000      
+2.student.9           .              .             1.0000      1020.0000      
+2.student.10          .              .             1.0000      1020.0000      
+2.student.11          .              .             1.0000      1020.0000      
+2.student.12          .              .             1.0000      1020.0000      
+3.main   .1           .             1.0000         1.0000      1015.0000      
+3.main   .2           .             1.0000         1.0000      1015.0000      
+3.main   .3           .             1.0000         1.0000      1015.0000      
+3.main   .4           .             1.0000         1.0000      1015.0000      
+3.main   .5           .             1.0000         1.0000      1015.0000      
+3.main   .6           .             1.0000         1.0000      1015.0000      
+3.main   .7           .             1.0000         1.0000      1015.0000      
+3.main   .8           .             1.0000         1.0000      1015.0000      
+3.main   .9           .             1.0000         1.0000      1015.0000      
+3.main   .10          .             1.0000         1.0000      1015.0000      
+3.main   .11          .             1.0000         1.0000      1015.0000      
+3.main   .12          .             1.0000         1.0000      1015.0000      
+3.lux    .1           .             1.0000         1.0000      1015.0000      
+3.lux    .2           .             1.0000         1.0000      1015.0000      
+3.lux    .3           .             1.0000         1.0000      1015.0000      
+3.lux    .4           .             1.0000         1.0000      1015.0000      
+3.lux    .5           .             1.0000         1.0000      1015.0000      
+3.lux    .6           .             1.0000         1.0000      1015.0000      
+3.lux    .7           .             1.0000         1.0000      1015.0000      
+3.lux    .8           .             1.0000         1.0000      1015.0000      
+3.lux    .9           .             1.0000         1.0000      1015.0000      
+3.lux    .10          .             1.0000         1.0000      1015.0000      
+3.lux    .11          .             1.0000         1.0000      1015.0000      
+3.lux    .12          .             1.0000         1.0000      1015.0000      
+3.student.1           .             1.0000         1.0000      1015.0000      
+3.student.2           .             1.0000         1.0000      1015.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 28
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR IO  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+3.student.3           .             1.0000         1.0000      1015.0000      
+3.student.4           .             1.0000         1.0000      1015.0000      
+3.student.5           .             1.0000         1.0000      1015.0000      
+3.student.6           .             1.0000         1.0000      1015.0000      
+3.student.7           .             1.0000         1.0000      1015.0000      
+3.student.8           .             1.0000         1.0000      1015.0000      
+3.student.9           .             1.0000         1.0000      1015.0000      
+3.student.10          .             1.0000         1.0000      1015.0000      
+3.student.11          .             1.0000         1.0000      1015.0000      
+3.student.12          .             1.0000         1.0000      1015.0000      
+
+---- VAR CAP  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+1.small           .              .             1.0000    -31780.0000      
+1.medium          .              .             1.0000    -37410.0000      
+1.large           .             1.0000         1.0000    -45200.0000      
+2.small           .              .             1.0000    -32020.0000      
+2.medium          .              .             1.0000    -47130.0000      
+2.large           .              .             1.0000    -57200.0000      
+3.small           .              .             1.0000    -16780.0000      
+3.medium          .              .             1.0000    -21390.0000      
+3.large           .             1.0000         1.0000    -41000.0000      
+
+---- VAR TOU  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+1.small           .              .             1.0000   -284685.0000      
+1.medium          .              .             1.0000   -336455.0000      
+1.large           .              .             1.0000   -465880.0000      
+2.small           .              .             1.0000   -999445.0000      
+2.medium          .              .             1.0000   -1.189825E+6      
+2.large           .              .             1.0000   -1.380205E+6      
+3.small           .              .             1.0000   -414110.0000      
+3.medium          .              .             1.0000   -439995.0000      
+3.large           .              .             1.0000   -465880.0000      
+
+---- VAR Q  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .1           .           140.0000        +INF             .          
+1.main   .2           .           140.0000        +INF             .          
+1.main   .3           .           140.0000        +INF             .          
+1.main   .4           .           140.0000        +INF             .          
+1.main   .5           .           140.0000        +INF             .          
+1.main   .6           .           140.0000        +INF             .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 29
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR Q  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .7           .           140.0000        +INF             .          
+1.main   .8           .           140.0000        +INF             .          
+1.main   .9           .           140.0000        +INF             .          
+1.main   .10          .           140.0000        +INF             .          
+1.main   .11          .           140.0000        +INF             .          
+1.main   .12          .           140.0000        +INF             .          
+1.lux    .1           .           110.0000        +INF             .          
+1.lux    .2           .           110.0000        +INF             .          
+1.lux    .3           .           110.0000        +INF             .          
+1.lux    .4           .           110.0000        +INF             .          
+1.lux    .5           .           110.0000        +INF             .          
+1.lux    .6           .           110.0000        +INF             .          
+1.lux    .7           .           110.0000        +INF             .          
+1.lux    .8           .           110.0000        +INF             .          
+1.lux    .9           .           110.0000        +INF             .          
+1.lux    .10          .           110.0000        +INF             .          
+1.lux    .11          .           110.0000        +INF             .          
+1.lux    .12          .           110.0000        +INF             .          
+1.student.1           .           120.0000        +INF             .          
+1.student.2           .           120.0000        +INF             .          
+1.student.3           .           120.0000        +INF             .          
+1.student.4           .           120.0000        +INF             .          
+1.student.5           .           120.0000        +INF             .          
+1.student.6           .           120.0000        +INF             .          
+1.student.7           .           120.0000        +INF             .          
+1.student.8           .           120.0000        +INF             .          
+1.student.9           .           120.0000        +INF             .          
+1.student.10          .           120.0000        +INF             .          
+1.student.11          .           120.0000        +INF             .          
+1.student.12          .           120.0000        +INF             .          
+2.main   .1           .              .            +INF            5.0000      
+2.main   .2           .              .            +INF            5.0000      
+2.main   .3           .              .            +INF            5.0000      
+2.main   .4           .              .            +INF            5.0000      
+2.main   .5           .              .            +INF            5.0000      
+2.main   .6           .              .            +INF            5.0000      
+2.main   .7           .              .            +INF            5.0000      
+2.main   .8           .              .            +INF            5.0000      
+2.main   .9           .              .            +INF            5.0000      
+2.main   .10          .              .            +INF            5.0000      
+2.main   .11          .              .            +INF            5.0000      
+2.main   .12          .              .            +INF            5.0000      
+2.lux    .1           .              .            +INF           15.0000      
+2.lux    .2           .              .            +INF           15.0000      
+2.lux    .3           .              .            +INF           15.0000      
+2.lux    .4           .              .            +INF           15.0000      
+2.lux    .5           .              .            +INF           15.0000      
+2.lux    .6           .              .            +INF           15.0000      
+2.lux    .7           .              .            +INF           15.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 30
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR Q  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+2.lux    .8           .              .            +INF           15.0000      
+2.lux    .9           .              .            +INF           15.0000      
+2.lux    .10          .              .            +INF           15.0000      
+2.lux    .11          .              .            +INF           15.0000      
+2.lux    .12          .              .            +INF           15.0000      
+2.student.1           .              .            +INF            6.0000      
+2.student.2           .              .            +INF            6.0000      
+2.student.3           .              .            +INF            6.0000      
+2.student.4           .              .            +INF            6.0000      
+2.student.5           .              .            +INF            6.0000      
+2.student.6           .              .            +INF            6.0000      
+2.student.7           .              .            +INF            6.0000      
+2.student.8           .              .            +INF            6.0000      
+2.student.9           .              .            +INF            6.0000      
+2.student.10          .              .            +INF            6.0000      
+2.student.11          .              .            +INF            6.0000      
+2.student.12          .              .            +INF            6.0000      
+3.main   .1           .           105.0000        +INF             .          
+3.main   .2           .           105.0000        +INF             .          
+3.main   .3           .           105.0000        +INF             .          
+3.main   .4           .           105.0000        +INF             .          
+3.main   .5           .           105.0000        +INF             .          
+3.main   .6           .           105.0000        +INF             .          
+3.main   .7           .           105.0000        +INF             .          
+3.main   .8           .           105.0000        +INF             .          
+3.main   .9           .           105.0000        +INF             .          
+3.main   .10          .           105.0000        +INF             .          
+3.main   .11          .           105.0000        +INF             .          
+3.main   .12          .           105.0000        +INF             .          
+3.lux    .1           .           120.0000        +INF             .          
+3.lux    .2           .           120.0000        +INF             .          
+3.lux    .3           .           120.0000        +INF             .          
+3.lux    .4           .           120.0000        +INF             .          
+3.lux    .5           .           120.0000        +INF             .          
+3.lux    .6           .           120.0000        +INF             .          
+3.lux    .7           .           120.0000        +INF             .          
+3.lux    .8           .           120.0000        +INF             .          
+3.lux    .9           .           120.0000        +INF             .          
+3.lux    .10          .           120.0000        +INF             .          
+3.lux    .11          .           120.0000        +INF             .          
+3.lux    .12          .           120.0000        +INF             .          
+3.student.1           .            95.0000        +INF             .          
+3.student.2           .            95.0000        +INF             .          
+3.student.3           .            95.0000        +INF             .          
+3.student.4           .            95.0000        +INF             .          
+3.student.5           .            95.0000        +INF             .          
+3.student.6           .            95.0000        +INF             .          
+3.student.7           .            95.0000        +INF             .          
+3.student.8           .            95.0000        +INF             .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 31
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR Q  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+3.student.9           .            95.0000        +INF             .          
+3.student.10          .            95.0000        +INF             .          
+3.student.11          .            95.0000        +INF             .          
+3.student.12          .            95.0000        +INF             .          
+
+---- VAR SA  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .1           .           140.0000        +INF             .          
+1.main   .2           .           140.0000        +INF             .          
+1.main   .3           .           140.0000        +INF             .          
+1.main   .4           .           140.0000        +INF             .          
+1.main   .5           .           140.0000        +INF             .          
+1.main   .6           .           140.0000        +INF             .          
+1.main   .7           .           140.0000        +INF             .          
+1.main   .8           .           140.0000        +INF             .          
+1.main   .9           .           140.0000        +INF             .          
+1.main   .10          .           140.0000        +INF             .          
+1.main   .11          .           140.0000        +INF             .          
+1.main   .12          .           140.0000        +INF             .          
+1.lux    .1           .           110.0000        +INF             .          
+1.lux    .2           .           110.0000        +INF             .          
+1.lux    .3           .           110.0000        +INF             .          
+1.lux    .4           .           110.0000        +INF             .          
+1.lux    .5           .           110.0000        +INF             .          
+1.lux    .6           .           110.0000        +INF             .          
+1.lux    .7           .           110.0000        +INF             .          
+1.lux    .8           .           110.0000        +INF             .          
+1.lux    .9           .           110.0000        +INF             .          
+1.lux    .10          .           110.0000        +INF             .          
+1.lux    .11          .           110.0000        +INF             .          
+1.lux    .12          .           110.0000        +INF             .          
+1.student.1           .           120.0000        +INF             .          
+1.student.2           .           120.0000        +INF             .          
+1.student.3           .           120.0000        +INF             .          
+1.student.4           .           120.0000        +INF             .          
+1.student.5           .           120.0000        +INF             .          
+1.student.6           .           120.0000        +INF             .          
+1.student.7           .           120.0000        +INF             .          
+1.student.8           .           120.0000        +INF             .          
+1.student.9           .           120.0000        +INF             .          
+1.student.10          .           120.0000        +INF             .          
+1.student.11          .           120.0000        +INF             .          
+1.student.12          .           120.0000        +INF             .          
+2.main   .1           .              .            +INF             .          
+2.main   .2           .              .            +INF             .          
+2.main   .3           .              .            +INF             .          
+2.main   .4           .              .            +INF             .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 32
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR SA  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+2.main   .5           .              .            +INF             .          
+2.main   .6           .              .            +INF             .          
+2.main   .7           .              .            +INF             .          
+2.main   .8           .              .            +INF             .          
+2.main   .9           .              .            +INF             .          
+2.main   .10          .              .            +INF             .          
+2.main   .11          .              .            +INF             .          
+2.main   .12          .              .            +INF             .          
+2.lux    .1           .              .            +INF             .          
+2.lux    .2           .              .            +INF             .          
+2.lux    .3           .              .            +INF             .          
+2.lux    .4           .              .            +INF             .          
+2.lux    .5           .              .            +INF             .          
+2.lux    .6           .              .            +INF             .          
+2.lux    .7           .              .            +INF             .          
+2.lux    .8           .              .            +INF             .          
+2.lux    .9           .              .            +INF             .          
+2.lux    .10          .              .            +INF             .          
+2.lux    .11          .              .            +INF             .          
+2.lux    .12          .              .            +INF             .          
+2.student.1           .              .            +INF             .          
+2.student.2           .              .            +INF             .          
+2.student.3           .              .            +INF             .          
+2.student.4           .              .            +INF             .          
+2.student.5           .              .            +INF             .          
+2.student.6           .              .            +INF             .          
+2.student.7           .              .            +INF             .          
+2.student.8           .              .            +INF             .          
+2.student.9           .              .            +INF             .          
+2.student.10          .              .            +INF             .          
+2.student.11          .              .            +INF             .          
+2.student.12          .              .            +INF             .          
+3.main   .1           .           105.0000        +INF             .          
+3.main   .2           .           105.0000        +INF             .          
+3.main   .3           .           105.0000        +INF             .          
+3.main   .4           .           105.0000        +INF             .          
+3.main   .5           .           105.0000        +INF             .          
+3.main   .6           .           105.0000        +INF             .          
+3.main   .7           .           105.0000        +INF             .          
+3.main   .8           .           105.0000        +INF             .          
+3.main   .9           .           105.0000        +INF             .          
+3.main   .10          .           105.0000        +INF             .          
+3.main   .11          .           105.0000        +INF             .          
+3.main   .12          .           105.0000        +INF             .          
+3.lux    .1           .           120.0000        +INF             .          
+3.lux    .2           .           120.0000        +INF             .          
+3.lux    .3           .           120.0000        +INF             .          
+3.lux    .4           .           120.0000        +INF             .          
+3.lux    .5           .           120.0000        +INF             .          
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 33
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR SA  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+3.lux    .6           .           120.0000        +INF             .          
+3.lux    .7           .           120.0000        +INF             .          
+3.lux    .8           .           120.0000        +INF             .          
+3.lux    .9           .           120.0000        +INF             .          
+3.lux    .10          .           120.0000        +INF             .          
+3.lux    .11          .           120.0000        +INF             .          
+3.lux    .12          .           120.0000        +INF             .          
+3.student.1           .            95.0000        +INF             .          
+3.student.2           .            95.0000        +INF             .          
+3.student.3           .            95.0000        +INF             .          
+3.student.4           .            95.0000        +INF             .          
+3.student.5           .            95.0000        +INF             .          
+3.student.6           .            95.0000        +INF             .          
+3.student.7           .            95.0000        +INF             .          
+3.student.8           .            95.0000        +INF             .          
+3.student.9           .            95.0000        +INF             .          
+3.student.10          .            95.0000        +INF             .          
+3.student.11          .            95.0000        +INF             .          
+3.student.12          .            95.0000        +INF             .          
+
+---- VAR IN  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .1           .              .            +INF           25.0000      
+1.main   .2           .              .            +INF           25.0000      
+1.main   .3           .              .            +INF           25.0000      
+1.main   .4           .              .            +INF           25.0000      
+1.main   .5           .              .            +INF           25.0000      
+1.main   .6           .              .            +INF           25.0000      
+1.main   .7           .              .            +INF           25.0000      
+1.main   .8           .              .            +INF           25.0000      
+1.main   .9           .              .            +INF           25.0000      
+1.main   .10          .              .            +INF           25.0000      
+1.main   .11          .              .            +INF           25.0000      
+1.main   .12          .              .            +INF           25.0000      
+1.lux    .1           .              .            +INF           30.0000      
+1.lux    .2           .              .            +INF           30.0000      
+1.lux    .3           .              .            +INF           30.0000      
+1.lux    .4           .              .            +INF           30.0000      
+1.lux    .5           .              .            +INF           30.0000      
+1.lux    .6           .              .            +INF           30.0000      
+1.lux    .7           .              .            +INF           30.0000      
+1.lux    .8           .              .            +INF           30.0000      
+1.lux    .9           .              .            +INF           30.0000      
+1.lux    .10          .              .            +INF           30.0000      
+1.lux    .11          .              .            +INF           30.0000      
+1.lux    .12          .              .            +INF           30.0000      
+1.student.1           .              .            +INF           31.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 34
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR IN  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.student.2           .              .            +INF           31.0000      
+1.student.3           .              .            +INF           31.0000      
+1.student.4           .              .            +INF           31.0000      
+1.student.5           .              .            +INF           31.0000      
+1.student.6           .              .            +INF           31.0000      
+1.student.7           .              .            +INF           31.0000      
+1.student.8           .              .            +INF           31.0000      
+1.student.9           .              .            +INF           31.0000      
+1.student.10          .              .            +INF           31.0000      
+1.student.11          .              .            +INF           31.0000      
+1.student.12          .              .            +INF           31.0000      
+2.main   .1           .              .            +INF           15.0000      
+2.main   .2           .              .            +INF           15.0000      
+2.main   .3           .              .            +INF           15.0000      
+2.main   .4           .              .            +INF           15.0000      
+2.main   .5           .              .            +INF           15.0000      
+2.main   .6           .              .            +INF           15.0000      
+2.main   .7           .              .            +INF           15.0000      
+2.main   .8           .              .            +INF           15.0000      
+2.main   .9           .              .            +INF           15.0000      
+2.main   .10          .              .            +INF           15.0000      
+2.main   .11          .              .            +INF           15.0000      
+2.main   .12          .              .            +INF           15.0000      
+2.lux    .1           .              .            +INF            EPS         
+2.lux    .2           .              .            +INF            EPS         
+2.lux    .3           .              .            +INF            EPS         
+2.lux    .4           .              .            +INF            EPS         
+2.lux    .5           .              .            +INF            EPS         
+2.lux    .6           .              .            +INF            EPS         
+2.lux    .7           .              .            +INF            EPS         
+2.lux    .8           .              .            +INF            EPS         
+2.lux    .9           .              .            +INF            EPS         
+2.lux    .10          .              .            +INF            EPS         
+2.lux    .11          .              .            +INF            EPS         
+2.lux    .12          .              .            +INF            EPS         
+2.student.1           .              .            +INF           19.0000      
+2.student.2           .              .            +INF           19.0000      
+2.student.3           .              .            +INF           19.0000      
+2.student.4           .              .            +INF           19.0000      
+2.student.5           .              .            +INF           19.0000      
+2.student.6           .              .            +INF           19.0000      
+2.student.7           .              .            +INF           19.0000      
+2.student.8           .              .            +INF           19.0000      
+2.student.9           .              .            +INF           19.0000      
+2.student.10          .              .            +INF           19.0000      
+2.student.11          .              .            +INF           19.0000      
+2.student.12          .              .            +INF           19.0000      
+3.main   .1           .              .            +INF           25.0000      
+3.main   .2           .              .            +INF           25.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 35
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR IN  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+3.main   .3           .              .            +INF           25.0000      
+3.main   .4           .              .            +INF           25.0000      
+3.main   .5           .              .            +INF           25.0000      
+3.main   .6           .              .            +INF           25.0000      
+3.main   .7           .              .            +INF           25.0000      
+3.main   .8           .              .            +INF           25.0000      
+3.main   .9           .              .            +INF           25.0000      
+3.main   .10          .              .            +INF           25.0000      
+3.main   .11          .              .            +INF           25.0000      
+3.main   .12          .              .            +INF           25.0000      
+3.lux    .1           .              .            +INF           30.0000      
+3.lux    .2           .              .            +INF           30.0000      
+3.lux    .3           .              .            +INF           30.0000      
+3.lux    .4           .              .            +INF           30.0000      
+3.lux    .5           .              .            +INF           30.0000      
+3.lux    .6           .              .            +INF           30.0000      
+3.lux    .7           .              .            +INF           30.0000      
+3.lux    .8           .              .            +INF           30.0000      
+3.lux    .9           .              .            +INF           30.0000      
+3.lux    .10          .              .            +INF           30.0000      
+3.lux    .11          .              .            +INF           30.0000      
+3.lux    .12          .              .            +INF           30.0000      
+3.student.1           .              .            +INF           31.0000      
+3.student.2           .              .            +INF           31.0000      
+3.student.3           .              .            +INF           31.0000      
+3.student.4           .              .            +INF           31.0000      
+3.student.5           .              .            +INF           31.0000      
+3.student.6           .              .            +INF           31.0000      
+3.student.7           .              .            +INF           31.0000      
+3.student.8           .              .            +INF           31.0000      
+3.student.9           .              .            +INF           31.0000      
+3.student.10          .              .            +INF           31.0000      
+3.student.11          .              .            +INF           31.0000      
+3.student.12          .              .            +INF           31.0000      
+
+---- VAR SH  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .1           .              .            +INF           20.0000      
+1.main   .2           .              .            +INF           20.0000      
+1.main   .3           .              .            +INF           20.0000      
+1.main   .4           .              .            +INF           20.0000      
+1.main   .5           .              .            +INF           20.0000      
+1.main   .6           .              .            +INF           20.0000      
+1.main   .7           .              .            +INF           20.0000      
+1.main   .8           .              .            +INF           20.0000      
+1.main   .9           .              .            +INF           20.0000      
+1.main   .10          .              .            +INF           20.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 36
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR SH  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+1.main   .11          .              .            +INF           20.0000      
+1.main   .12          .              .            +INF           20.0000      
+1.lux    .1           .              .            +INF           30.0000      
+1.lux    .2           .              .            +INF           30.0000      
+1.lux    .3           .              .            +INF           30.0000      
+1.lux    .4           .              .            +INF           30.0000      
+1.lux    .5           .              .            +INF           30.0000      
+1.lux    .6           .              .            +INF           30.0000      
+1.lux    .7           .              .            +INF           30.0000      
+1.lux    .8           .              .            +INF           30.0000      
+1.lux    .9           .              .            +INF           30.0000      
+1.lux    .10          .              .            +INF           30.0000      
+1.lux    .11          .              .            +INF           30.0000      
+1.lux    .12          .              .            +INF           30.0000      
+1.student.1           .              .            +INF           36.0000      
+1.student.2           .              .            +INF           36.0000      
+1.student.3           .              .            +INF           36.0000      
+1.student.4           .              .            +INF           36.0000      
+1.student.5           .              .            +INF           36.0000      
+1.student.6           .              .            +INF           36.0000      
+1.student.7           .              .            +INF           36.0000      
+1.student.8           .              .            +INF           36.0000      
+1.student.9           .              .            +INF           36.0000      
+1.student.10          .              .            +INF           36.0000      
+1.student.11          .              .            +INF           36.0000      
+1.student.12          .              .            +INF           36.0000      
+2.main   .1           .              .            +INF           25.0000      
+2.main   .2           .              .            +INF           25.0000      
+2.main   .3           .              .            +INF           25.0000      
+2.main   .4           .              .            +INF           25.0000      
+2.main   .5           .              .            +INF           25.0000      
+2.main   .6           .              .            +INF           25.0000      
+2.main   .7           .              .            +INF           25.0000      
+2.main   .8           .              .            +INF           25.0000      
+2.main   .9           .              .            +INF           25.0000      
+2.main   .10          .              .            +INF           25.0000      
+2.main   .11          .              .            +INF           25.0000      
+2.main   .12          .              .            +INF           25.0000      
+2.lux    .1           .              .            +INF           45.0000      
+2.lux    .2           .              .            +INF           45.0000      
+2.lux    .3           .              .            +INF           45.0000      
+2.lux    .4           .              .            +INF           45.0000      
+2.lux    .5           .              .            +INF           45.0000      
+2.lux    .6           .              .            +INF           45.0000      
+2.lux    .7           .              .            +INF           45.0000      
+2.lux    .8           .              .            +INF           45.0000      
+2.lux    .9           .              .            +INF           45.0000      
+2.lux    .10          .              .            +INF           45.0000      
+2.lux    .11          .              .            +INF           45.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 37
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+     VAR SH  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+2.lux    .12          .              .            +INF           45.0000      
+2.student.1           .              .            +INF           42.0000      
+2.student.2           .              .            +INF           42.0000      
+2.student.3           .              .            +INF           42.0000      
+2.student.4           .              .            +INF           42.0000      
+2.student.5           .              .            +INF           42.0000      
+2.student.6           .              .            +INF           42.0000      
+2.student.7           .              .            +INF           42.0000      
+2.student.8           .              .            +INF           42.0000      
+2.student.9           .              .            +INF           42.0000      
+2.student.10          .              .            +INF           42.0000      
+2.student.11          .              .            +INF           42.0000      
+2.student.12          .              .            +INF           42.0000      
+3.main   .1           .              .            +INF           20.0000      
+3.main   .2           .              .            +INF           20.0000      
+3.main   .3           .              .            +INF           20.0000      
+3.main   .4           .              .            +INF           20.0000      
+3.main   .5           .              .            +INF           20.0000      
+3.main   .6           .              .            +INF           20.0000      
+3.main   .7           .              .            +INF           20.0000      
+3.main   .8           .              .            +INF           20.0000      
+3.main   .9           .              .            +INF           20.0000      
+3.main   .10          .              .            +INF           20.0000      
+3.main   .11          .              .            +INF           20.0000      
+3.main   .12          .              .            +INF           20.0000      
+3.lux    .1           .              .            +INF           30.0000      
+3.lux    .2           .              .            +INF           30.0000      
+3.lux    .3           .              .            +INF           30.0000      
+3.lux    .4           .              .            +INF           30.0000      
+3.lux    .5           .              .            +INF           30.0000      
+3.lux    .6           .              .            +INF           30.0000      
+3.lux    .7           .              .            +INF           30.0000      
+3.lux    .8           .              .            +INF           30.0000      
+3.lux    .9           .              .            +INF           30.0000      
+3.lux    .10          .              .            +INF           30.0000      
+3.lux    .11          .              .            +INF           30.0000      
+3.lux    .12          .              .            +INF           30.0000      
+3.student.1           .              .            +INF           36.0000      
+3.student.2           .              .            +INF           36.0000      
+3.student.3           .              .            +INF           36.0000      
+3.student.4           .              .            +INF           36.0000      
+3.student.5           .              .            +INF           36.0000      
+3.student.6           .              .            +INF           36.0000      
+3.student.7           .              .            +INF           36.0000      
+3.student.8           .              .            +INF           36.0000      
+3.student.9           .              .            +INF           36.0000      
+3.student.10          .              .            +INF           36.0000      
+3.student.11          .              .            +INF           36.0000      
+3.student.12          .              .            +INF           36.0000      
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 38
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR z                 -INF       -13010.0000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 39
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     72 VARIABLE z.L                   =   -13010.000  
+
+----     72 VARIABLE CH.L  
+
+1 1.000,    3 1.000
+
+
+----     72 VARIABLE IN.L  
+
+                      ( ALL       0.000 )
+
+
+----     72 VARIABLE Q.L  
+
+                    1           2           3           4           5           6           7           8           9          10          11          12
+
+1.main        140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000
+1.lux         110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000
+1.student     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000
+3.main        105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000
+3.lux         120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000
+3.student      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000
+
+
+----     72 VARIABLE SH.L  
+
+                      ( ALL       0.000 )
+
+
+----     72 VARIABLE SA.L  
+
+                    1           2           3           4           5           6           7           8           9          10          11          12
+
+1.main        140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000     140.000
+1.lux         110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000     110.000
+1.student     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000
+3.main        105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000     105.000
+3.lux         120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000     120.000
+3.student      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000      95.000
+
+
+----     72 VARIABLE TOU.L  
+
+                      ( ALL       0.000 )
+
+
+----     72 VARIABLE IO.L  
+
+                    1           2           3           4           5           6           7           8           9          10          11          12
+
+1.main          1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000
+1.lux           1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000
+1.student       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows                                                                                                                                                                   03/06/18 16:01:09 Page 40
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+         72 VARIABLE IO.L  
+
+                    1           2           3           4           5           6           7           8           9          10          11          12
+
+3.main          1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000
+3.lux           1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000
+3.student       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000       1.000
+
+
+----     72 VARIABLE CAP.L  
+
+        large
+
+1       1.000
+3       1.000
+
+
+
+EXECUTION TIME       =        0.016 SECONDS      3 MB  24.1.2 r40979 WEX-WEI
+
+
+USER: Gary Goldstein                                 G010614:2121CA-WIN
+      Decision Ware, Inc.                                        DC2807
+
+
+**** FILE SUMMARY
+
+Input      E:\My_software_develops\Lava flow\java_lava_flow\Warehouse\model.gms
+Output     E:\My_software_develops\Lava flow\java_lava_flow\Warehouse\model.lst

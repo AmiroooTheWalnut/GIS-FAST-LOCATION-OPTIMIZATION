@@ -1,0 +1,2293 @@
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows 01/10/18 17:57:26 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  set
+   2  i /1*3/
+   3  m /1*12/
+   4  j /small,medium,large/
+   5  k /main,lux,student/
+   6  ;
+   7  parameter
+   8  LP(i)
+   9  /1 100,2 200,3 300/
+  10  LE(i)
+  11  /1 0.5,2 0.6,3 0.8/
+  12  BD(i,k,j)
+  13  /1.main.small 100,1.main.medium 120,1.main.large 140,1.lux.small 90,1.lux.
+      medium 100,1.lux.large 110,1.student.small 50,1.student.medium 70,1.studen
+      t.large 120,2.main.small 40,2.main.medium 60,2.main.large 90,2.lux.small 5
+      5,2.lux.medium 75,2.lux.large 80,2.student.small 35,2.student.medium 65,2.
+      student.large 85,3.main.small 65,3.main.medium 75,3.main.large 105,3.lux.s
+      mall 20,3.lux.medium 35,3.lux.large 120,3.student.small 75,3.student.mediu
+      m 85,3.student.large 95/
+  14  TOUG(i,j)
+  15  /1.small 10,1.medium 12,1.large 17,2.small 20,2.medium 24,2.large 28,3.sma
+      ll 15,3.medium 16,3.large 17/
+  16  TC(i)
+  17  /1 10,2 20,3 15/
+  18  ;
+  19  *Static*
+  20  binary variables
+  21  CH(i)
+  22  IO(i,k,m)
+  23  CAP(i,j)
+  24  TOU(i,j)
+  25  ;
+  26  positive variables
+  27  Q(i,k,m)
+  28  SA(i,k,m)
+  29  IN(i,k,m)
+  30  SH(i,k,m)
+  31  ;
+  32  parameter
+  33  H(k)
+  34  /main 20,lux 15,student 25/
+  35  OC /1000/
+  36  SHC(k)
+  37  /main 10,lux 15,student 30/
+  38  MD(k,m)
+  39  /main.1 50,main.2 60,main.3 65,main.4 70,main.5 45,main.6 55,main.7 80,mai
+      n.8 85,main.9 90,main.10 65,main.11 70,main.12 100
+  40  lux.1 50,lux.2 60,lux.3 65,lux.4 70,lux.5 45,lux.6 55,lux.7 80,lux.8 85,lu
+      x.9 90,lux.10 65,lux.11 70,lux.12 100
+  41  student.1 50,student.2 60,student.3 65,student.4 70,student.5 45,student.6
+       55,student.7 80,student.8 85,student.9 90,student.10 65,student.11 70,stu
+      dent.12 100/
+  42  SP(k)
+  43  /main 20,lux 45,student 18/
+  44  PC(k)
+  45  /main 5,lux 15,student 6/
+  46  CC(j)
+  47  /small 20,medium 30,large 40/
+  48  TOUC /50/
+  49  VC(k)
+  50  /main 4,lux 5,student 2/
+  51  VOL(j)
+  52  /small 2000,medium 3000,large 4000/
+  53  ;
+  54  free variable z;
+  55  equation obj,TOU_L_CH,CAP_L_CH,IN_BALANCE,SELLING,ISORDER,CAPACITY,CHSH;
+  56  obj.. z=e=sum(i,(LP(i)*LE(i))*CH(i))+sum((i,j),CAP(i,j)*CC(j))+sum((i,j),T
+      OU(i,j)*TOUC)-sum((i,k,m),SA(i,k,m)*SP(k))+sum((i,k,m),Q(i,k,m)*PC(k))+sum
+      ((i,k,m),IO(i,k,m)*(OC+TC(i)))+sum((i,k,m),IN(i,k,m)*H(k))+sum((i,k,m),SH(
+      i,k,m)*SHC(k));
+  57  TOU_L_CH(i).. sum(j,TOU(i,j))=l=CH(i);
+  58  CAP_L_CH(i).. sum(j,CAP(i,j))=e=CH(i);
+  59  IN_BALANCE(i,k,m).. Q(i,k,m)+IN(i-1,k,m)-SA(i,k,m)=e=IN(i,k,m);
+  60  *initIN(i,k,m).. IN(i,k,m)=l=10000000$(ord(m) ne 1);
+  61  SELLING(i,k,m).. SA(i,k,m)+SH(i,k,m)=e=sum(j,BD(i,k,j)*CAP(i,j))+sum(j,MD(
+      k,m)*(1+TOUG(i,j))*TOU(i,j));
+  62  ISORDER(i,k,m).. Q(i,k,m)=l=IO(i,k,m)*100000000;
+  63  CAPACITY(i,m).. sum(k,(Q(i,k,m)+IN(i,k,m))*VC(k))=l=sum(j,CAP(i,j)*VOL(j))
+      ;
+  64  CHSH(i).. sum((k,m),SH(i,k,m))=l=CH(i)*10000000;
+  65  *CHQ(i).. sum((k,m),Q(i,k,m))=l=CH(i)*10000000;
+  66  *CHSA(i).. sum((k,m),SA(i,k,m))=l=CH(i)*10000000;
+  67  *CHIN(i).. sum((k,m),IN(i,k,m))=l=CH(i)*10000000;
+  68  *CHIO(i).. sum((k,m),IO(i,k,m))=l=CH(i)*10000000;
+  69  model Project /ALL/;
+  70  options threads=6;
+  71  solve Project using mip minimizing z;
+  72  display z.l,CH.l,IN.l,Q.l,SH.l,SA.l,TOU.l,IO.l,CAP.l;
+  73  *file fy /result.txt/;
+  74  *put fy z.l;
+  75  *put fy /;
+  76  *loop(i,put fy CH.l(i));
+  77  *put fy /;
+  78  *loop((i,k,m),put fy IN.l(i,k,m));
+  79  *put fy /;
+  80  *loop((i,k,m),put fy Q.l(i,k,m));
+  81  *put fy /;
+  82  *loop((i,k,m),put fy SH.l(i,k,m));
+  83  *put fy /;
+  84  *loop((i,k,m),put fy SA.l(i,k,m));
+  85  *put fy /;
+  86  *loop((i,j),put fy TOU.l(i,j));
+  87  *put fy /;
+  88  *loop((i,k,m),put fy IO.l(i,k,m));
+  89  *put fy /;
+  90  *loop((i,j),put fy CAP.l(i,j));
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  24.1.2 r40979 WEX-WEI
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows 01/10/18 17:57:26 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE Project Using MIP From line 71
+
+
+---- obj  =E=  
+
+obj..  - 50*CH(1) - 120*CH(2) - 240*CH(3) - 1010*IO(1,main,1)
+     
+      - 1010*IO(1,main,2) - 1010*IO(1,main,3) - 1010*IO(1,main,4)
+     
+      - 1010*IO(1,main,5) - 1010*IO(1,main,6) - 1010*IO(1,main,7)
+     
+      - 1010*IO(1,main,8) - 1010*IO(1,main,9) - 1010*IO(1,main,10)
+     
+      - 1010*IO(1,main,11) - 1010*IO(1,main,12) - 1010*IO(1,lux,1)
+     
+      - 1010*IO(1,lux,2) - 1010*IO(1,lux,3) - 1010*IO(1,lux,4)
+     
+      - 1010*IO(1,lux,5) - 1010*IO(1,lux,6) - 1010*IO(1,lux,7)
+     
+      - 1010*IO(1,lux,8) - 1010*IO(1,lux,9) - 1010*IO(1,lux,10)
+     
+      - 1010*IO(1,lux,11) - 1010*IO(1,lux,12) - 1010*IO(1,student,1)
+     
+      - 1010*IO(1,student,2) - 1010*IO(1,student,3) - 1010*IO(1,student,4)
+     
+      - 1010*IO(1,student,5) - 1010*IO(1,student,6) - 1010*IO(1,student,7)
+     
+      - 1010*IO(1,student,8) - 1010*IO(1,student,9) - 1010*IO(1,student,10)
+     
+      - 1010*IO(1,student,11) - 1010*IO(1,student,12) - 1020*IO(2,main,1)
+     
+      - 1020*IO(2,main,2) - 1020*IO(2,main,3) - 1020*IO(2,main,4)
+     
+      - 1020*IO(2,main,5) - 1020*IO(2,main,6) - 1020*IO(2,main,7)
+     
+      - 1020*IO(2,main,8) - 1020*IO(2,main,9) - 1020*IO(2,main,10)
+     
+      - 1020*IO(2,main,11) - 1020*IO(2,main,12) - 1020*IO(2,lux,1)
+     
+      - 1020*IO(2,lux,2) - 1020*IO(2,lux,3) - 1020*IO(2,lux,4)
+     
+      - 1020*IO(2,lux,5) - 1020*IO(2,lux,6) - 1020*IO(2,lux,7)
+     
+      - 1020*IO(2,lux,8) - 1020*IO(2,lux,9) - 1020*IO(2,lux,10)
+     
+      - 1020*IO(2,lux,11) - 1020*IO(2,lux,12) - 1020*IO(2,student,1)
+     
+      - 1020*IO(2,student,2) - 1020*IO(2,student,3) - 1020*IO(2,student,4)
+     
+      - 1020*IO(2,student,5) - 1020*IO(2,student,6) - 1020*IO(2,student,7)
+     
+      - 1020*IO(2,student,8) - 1020*IO(2,student,9) - 1020*IO(2,student,10)
+     
+      - 1020*IO(2,student,11) - 1020*IO(2,student,12) - 1015*IO(3,main,1)
+     
+      - 1015*IO(3,main,2) - 1015*IO(3,main,3) - 1015*IO(3,main,4)
+     
+      - 1015*IO(3,main,5) - 1015*IO(3,main,6) - 1015*IO(3,main,7)
+     
+      - 1015*IO(3,main,8) - 1015*IO(3,main,9) - 1015*IO(3,main,10)
+     
+      - 1015*IO(3,main,11) - 1015*IO(3,main,12) - 1015*IO(3,lux,1)
+     
+      - 1015*IO(3,lux,2) - 1015*IO(3,lux,3) - 1015*IO(3,lux,4)
+     
+      - 1015*IO(3,lux,5) - 1015*IO(3,lux,6) - 1015*IO(3,lux,7)
+     
+      - 1015*IO(3,lux,8) - 1015*IO(3,lux,9) - 1015*IO(3,lux,10)
+     
+      - 1015*IO(3,lux,11) - 1015*IO(3,lux,12) - 1015*IO(3,student,1)
+     
+      - 1015*IO(3,student,2) - 1015*IO(3,student,3) - 1015*IO(3,student,4)
+     
+      - 1015*IO(3,student,5) - 1015*IO(3,student,6) - 1015*IO(3,student,7)
+     
+      - 1015*IO(3,student,8) - 1015*IO(3,student,9) - 1015*IO(3,student,10)
+     
+      - 1015*IO(3,student,11) - 1015*IO(3,student,12) - 20*CAP(1,small)
+     
+      - 30*CAP(1,medium) - 40*CAP(1,large) - 20*CAP(2,small) - 30*CAP(2,medium)
+     
+      - 40*CAP(2,large) - 20*CAP(3,small) - 30*CAP(3,medium) - 40*CAP(3,large)
+     
+      - 50*TOU(1,small) - 50*TOU(1,medium) - 50*TOU(1,large) - 50*TOU(2,small)
+     
+      - 50*TOU(2,medium) - 50*TOU(2,large) - 50*TOU(3,small) - 50*TOU(3,medium)
+     
+      - 50*TOU(3,large) - 5*Q(1,main,1) - 5*Q(1,main,2) - 5*Q(1,main,3)
+     
+      - 5*Q(1,main,4) - 5*Q(1,main,5) - 5*Q(1,main,6) - 5*Q(1,main,7)
+     
+      - 5*Q(1,main,8) - 5*Q(1,main,9) - 5*Q(1,main,10) - 5*Q(1,main,11)
+     
+      - 5*Q(1,main,12) - 15*Q(1,lux,1) - 15*Q(1,lux,2) - 15*Q(1,lux,3)
+     
+      - 15*Q(1,lux,4) - 15*Q(1,lux,5) - 15*Q(1,lux,6) - 15*Q(1,lux,7)
+     
+      - 15*Q(1,lux,8) - 15*Q(1,lux,9) - 15*Q(1,lux,10) - 15*Q(1,lux,11)
+     
+      - 15*Q(1,lux,12) - 6*Q(1,student,1) - 6*Q(1,student,2) - 6*Q(1,student,3)
+     
+      - 6*Q(1,student,4) - 6*Q(1,student,5) - 6*Q(1,student,6)
+     
+      - 6*Q(1,student,7) - 6*Q(1,student,8) - 6*Q(1,student,9)
+     
+      - 6*Q(1,student,10) - 6*Q(1,student,11) - 6*Q(1,student,12)
+     
+      - 5*Q(2,main,1) - 5*Q(2,main,2) - 5*Q(2,main,3) - 5*Q(2,main,4)
+     
+      - 5*Q(2,main,5) - 5*Q(2,main,6) - 5*Q(2,main,7) - 5*Q(2,main,8)
+     
+      - 5*Q(2,main,9) - 5*Q(2,main,10) - 5*Q(2,main,11) - 5*Q(2,main,12)
+     
+      - 15*Q(2,lux,1) - 15*Q(2,lux,2) - 15*Q(2,lux,3) - 15*Q(2,lux,4)
+     
+      - 15*Q(2,lux,5) - 15*Q(2,lux,6) - 15*Q(2,lux,7) - 15*Q(2,lux,8)
+     
+      - 15*Q(2,lux,9) - 15*Q(2,lux,10) - 15*Q(2,lux,11) - 15*Q(2,lux,12)
+     
+      - 6*Q(2,student,1) - 6*Q(2,student,2) - 6*Q(2,student,3)
+     
+      - 6*Q(2,student,4) - 6*Q(2,student,5) - 6*Q(2,student,6)
+     
+      - 6*Q(2,student,7) - 6*Q(2,student,8) - 6*Q(2,student,9)
+     
+      - 6*Q(2,student,10) - 6*Q(2,student,11) - 6*Q(2,student,12)
+     
+      - 5*Q(3,main,1) - 5*Q(3,main,2) - 5*Q(3,main,3) - 5*Q(3,main,4)
+     
+      - 5*Q(3,main,5) - 5*Q(3,main,6) - 5*Q(3,main,7) - 5*Q(3,main,8)
+     
+      - 5*Q(3,main,9) - 5*Q(3,main,10) - 5*Q(3,main,11) - 5*Q(3,main,12)
+     
+      - 15*Q(3,lux,1) - 15*Q(3,lux,2) - 15*Q(3,lux,3) - 15*Q(3,lux,4)
+     
+      - 15*Q(3,lux,5) - 15*Q(3,lux,6) - 15*Q(3,lux,7) - 15*Q(3,lux,8)
+     
+      - 15*Q(3,lux,9) - 15*Q(3,lux,10) - 15*Q(3,lux,11) - 15*Q(3,lux,12)
+     
+      - 6*Q(3,student,1) - 6*Q(3,student,2) - 6*Q(3,student,3)
+     
+      - 6*Q(3,student,4) - 6*Q(3,student,5) - 6*Q(3,student,6)
+     
+      - 6*Q(3,student,7) - 6*Q(3,student,8) - 6*Q(3,student,9)
+     
+      - 6*Q(3,student,10) - 6*Q(3,student,11) - 6*Q(3,student,12)
+     
+      + 20*SA(1,main,1) + 20*SA(1,main,2) + 20*SA(1,main,3) + 20*SA(1,main,4)
+     
+      + 20*SA(1,main,5) + 20*SA(1,main,6) + 20*SA(1,main,7) + 20*SA(1,main,8)
+     
+      + 20*SA(1,main,9) + 20*SA(1,main,10) + 20*SA(1,main,11) + 20*SA(1,main,12)
+     
+      + 45*SA(1,lux,1) + 45*SA(1,lux,2) + 45*SA(1,lux,3) + 45*SA(1,lux,4)
+     
+      + 45*SA(1,lux,5) + 45*SA(1,lux,6) + 45*SA(1,lux,7) + 45*SA(1,lux,8)
+     
+      + 45*SA(1,lux,9) + 45*SA(1,lux,10) + 45*SA(1,lux,11) + 45*SA(1,lux,12)
+     
+      + 18*SA(1,student,1) + 18*SA(1,student,2) + 18*SA(1,student,3)
+     
+      + 18*SA(1,student,4) + 18*SA(1,student,5) + 18*SA(1,student,6)
+     
+      + 18*SA(1,student,7) + 18*SA(1,student,8) + 18*SA(1,student,9)
+     
+      + 18*SA(1,student,10) + 18*SA(1,student,11) + 18*SA(1,student,12)
+     
+      + 20*SA(2,main,1) + 20*SA(2,main,2) + 20*SA(2,main,3) + 20*SA(2,main,4)
+     
+      + 20*SA(2,main,5) + 20*SA(2,main,6) + 20*SA(2,main,7) + 20*SA(2,main,8)
+     
+      + 20*SA(2,main,9) + 20*SA(2,main,10) + 20*SA(2,main,11) + 20*SA(2,main,12)
+     
+      + 45*SA(2,lux,1) + 45*SA(2,lux,2) + 45*SA(2,lux,3) + 45*SA(2,lux,4)
+     
+      + 45*SA(2,lux,5) + 45*SA(2,lux,6) + 45*SA(2,lux,7) + 45*SA(2,lux,8)
+     
+      + 45*SA(2,lux,9) + 45*SA(2,lux,10) + 45*SA(2,lux,11) + 45*SA(2,lux,12)
+     
+      + 18*SA(2,student,1) + 18*SA(2,student,2) + 18*SA(2,student,3)
+     
+      + 18*SA(2,student,4) + 18*SA(2,student,5) + 18*SA(2,student,6)
+     
+      + 18*SA(2,student,7) + 18*SA(2,student,8) + 18*SA(2,student,9)
+     
+      + 18*SA(2,student,10) + 18*SA(2,student,11) + 18*SA(2,student,12)
+     
+      + 20*SA(3,main,1) + 20*SA(3,main,2) + 20*SA(3,main,3) + 20*SA(3,main,4)
+     
+      + 20*SA(3,main,5) + 20*SA(3,main,6) + 20*SA(3,main,7) + 20*SA(3,main,8)
+     
+      + 20*SA(3,main,9) + 20*SA(3,main,10) + 20*SA(3,main,11) + 20*SA(3,main,12)
+     
+      + 45*SA(3,lux,1) + 45*SA(3,lux,2) + 45*SA(3,lux,3) + 45*SA(3,lux,4)
+     
+      + 45*SA(3,lux,5) + 45*SA(3,lux,6) + 45*SA(3,lux,7) + 45*SA(3,lux,8)
+     
+      + 45*SA(3,lux,9) + 45*SA(3,lux,10) + 45*SA(3,lux,11) + 45*SA(3,lux,12)
+     
+      + 18*SA(3,student,1) + 18*SA(3,student,2) + 18*SA(3,student,3)
+     
+      + 18*SA(3,student,4) + 18*SA(3,student,5) + 18*SA(3,student,6)
+     
+      + 18*SA(3,student,7) + 18*SA(3,student,8) + 18*SA(3,student,9)
+     
+      + 18*SA(3,student,10) + 18*SA(3,student,11) + 18*SA(3,student,12)
+     
+      - 20*IN(1,main,1) - 20*IN(1,main,2) - 20*IN(1,main,3) - 20*IN(1,main,4)
+     
+      - 20*IN(1,main,5) - 20*IN(1,main,6) - 20*IN(1,main,7) - 20*IN(1,main,8)
+     
+      - 20*IN(1,main,9) - 20*IN(1,main,10) - 20*IN(1,main,11) - 20*IN(1,main,12)
+     
+      - 15*IN(1,lux,1) - 15*IN(1,lux,2) - 15*IN(1,lux,3) - 15*IN(1,lux,4)
+     
+      - 15*IN(1,lux,5) - 15*IN(1,lux,6) - 15*IN(1,lux,7) - 15*IN(1,lux,8)
+     
+      - 15*IN(1,lux,9) - 15*IN(1,lux,10) - 15*IN(1,lux,11) - 15*IN(1,lux,12)
+     
+      - 25*IN(1,student,1) - 25*IN(1,student,2) - 25*IN(1,student,3)
+     
+      - 25*IN(1,student,4) - 25*IN(1,student,5) - 25*IN(1,student,6)
+     
+      - 25*IN(1,student,7) - 25*IN(1,student,8) - 25*IN(1,student,9)
+     
+      - 25*IN(1,student,10) - 25*IN(1,student,11) - 25*IN(1,student,12)
+     
+      - 20*IN(2,main,1) - 20*IN(2,main,2) - 20*IN(2,main,3) - 20*IN(2,main,4)
+     
+      - 20*IN(2,main,5) - 20*IN(2,main,6) - 20*IN(2,main,7) - 20*IN(2,main,8)
+     
+      - 20*IN(2,main,9) - 20*IN(2,main,10) - 20*IN(2,main,11) - 20*IN(2,main,12)
+     
+      - 15*IN(2,lux,1) - 15*IN(2,lux,2) - 15*IN(2,lux,3) - 15*IN(2,lux,4)
+     
+      - 15*IN(2,lux,5) - 15*IN(2,lux,6) - 15*IN(2,lux,7) - 15*IN(2,lux,8)
+     
+      - 15*IN(2,lux,9) - 15*IN(2,lux,10) - 15*IN(2,lux,11) - 15*IN(2,lux,12)
+     
+      - 25*IN(2,student,1) - 25*IN(2,student,2) - 25*IN(2,student,3)
+     
+      - 25*IN(2,student,4) - 25*IN(2,student,5) - 25*IN(2,student,6)
+     
+      - 25*IN(2,student,7) - 25*IN(2,student,8) - 25*IN(2,student,9)
+     
+      - 25*IN(2,student,10) - 25*IN(2,student,11) - 25*IN(2,student,12)
+     
+      - 20*IN(3,main,1) - 20*IN(3,main,2) - 20*IN(3,main,3) - 20*IN(3,main,4)
+     
+      - 20*IN(3,main,5) - 20*IN(3,main,6) - 20*IN(3,main,7) - 20*IN(3,main,8)
+     
+      - 20*IN(3,main,9) - 20*IN(3,main,10) - 20*IN(3,main,11) - 20*IN(3,main,12)
+     
+      - 15*IN(3,lux,1) - 15*IN(3,lux,2) - 15*IN(3,lux,3) - 15*IN(3,lux,4)
+     
+      - 15*IN(3,lux,5) - 15*IN(3,lux,6) - 15*IN(3,lux,7) - 15*IN(3,lux,8)
+     
+      - 15*IN(3,lux,9) - 15*IN(3,lux,10) - 15*IN(3,lux,11) - 15*IN(3,lux,12)
+     
+      - 25*IN(3,student,1) - 25*IN(3,student,2) - 25*IN(3,student,3)
+     
+      - 25*IN(3,student,4) - 25*IN(3,student,5) - 25*IN(3,student,6)
+     
+      - 25*IN(3,student,7) - 25*IN(3,student,8) - 25*IN(3,student,9)
+     
+      - 25*IN(3,student,10) - 25*IN(3,student,11) - 25*IN(3,student,12)
+     
+      - 10*SH(1,main,1) - 10*SH(1,main,2) - 10*SH(1,main,3) - 10*SH(1,main,4)
+     
+      - 10*SH(1,main,5) - 10*SH(1,main,6) - 10*SH(1,main,7) - 10*SH(1,main,8)
+     
+      - 10*SH(1,main,9) - 10*SH(1,main,10) - 10*SH(1,main,11) - 10*SH(1,main,12)
+     
+      - 15*SH(1,lux,1) - 15*SH(1,lux,2) - 15*SH(1,lux,3) - 15*SH(1,lux,4)
+     
+      - 15*SH(1,lux,5) - 15*SH(1,lux,6) - 15*SH(1,lux,7) - 15*SH(1,lux,8)
+     
+      - 15*SH(1,lux,9) - 15*SH(1,lux,10) - 15*SH(1,lux,11) - 15*SH(1,lux,12)
+     
+      - 30*SH(1,student,1) - 30*SH(1,student,2) - 30*SH(1,student,3)
+     
+      - 30*SH(1,student,4) - 30*SH(1,student,5) - 30*SH(1,student,6)
+     
+      - 30*SH(1,student,7) - 30*SH(1,student,8) - 30*SH(1,student,9)
+     
+      - 30*SH(1,student,10) - 30*SH(1,student,11) - 30*SH(1,student,12)
+     
+      - 10*SH(2,main,1) - 10*SH(2,main,2) - 10*SH(2,main,3) - 10*SH(2,main,4)
+     
+      - 10*SH(2,main,5) - 10*SH(2,main,6) - 10*SH(2,main,7) - 10*SH(2,main,8)
+     
+      - 10*SH(2,main,9) - 10*SH(2,main,10) - 10*SH(2,main,11) - 10*SH(2,main,12)
+     
+      - 15*SH(2,lux,1) - 15*SH(2,lux,2) - 15*SH(2,lux,3) - 15*SH(2,lux,4)
+     
+      - 15*SH(2,lux,5) - 15*SH(2,lux,6) - 15*SH(2,lux,7) - 15*SH(2,lux,8)
+     
+      - 15*SH(2,lux,9) - 15*SH(2,lux,10) - 15*SH(2,lux,11) - 15*SH(2,lux,12)
+     
+      - 30*SH(2,student,1) - 30*SH(2,student,2) - 30*SH(2,student,3)
+     
+      - 30*SH(2,student,4) - 30*SH(2,student,5) - 30*SH(2,student,6)
+     
+      - 30*SH(2,student,7) - 30*SH(2,student,8) - 30*SH(2,student,9)
+     
+      - 30*SH(2,student,10) - 30*SH(2,student,11) - 30*SH(2,student,12)
+     
+      - 10*SH(3,main,1) - 10*SH(3,main,2) - 10*SH(3,main,3) - 10*SH(3,main,4)
+     
+      - 10*SH(3,main,5) - 10*SH(3,main,6) - 10*SH(3,main,7) - 10*SH(3,main,8)
+     
+      - 10*SH(3,main,9) - 10*SH(3,main,10) - 10*SH(3,main,11) - 10*SH(3,main,12)
+     
+      - 15*SH(3,lux,1) - 15*SH(3,lux,2) - 15*SH(3,lux,3) - 15*SH(3,lux,4)
+     
+      - 15*SH(3,lux,5) - 15*SH(3,lux,6) - 15*SH(3,lux,7) - 15*SH(3,lux,8)
+     
+      - 15*SH(3,lux,9) - 15*SH(3,lux,10) - 15*SH(3,lux,11) - 15*SH(3,lux,12)
+     
+      - 30*SH(3,student,1) - 30*SH(3,student,2) - 30*SH(3,student,3)
+     
+      - 30*SH(3,student,4) - 30*SH(3,student,5) - 30*SH(3,student,6)
+     
+      - 30*SH(3,student,7) - 30*SH(3,student,8) - 30*SH(3,student,9)
+     
+      - 30*SH(3,student,10) - 30*SH(3,student,11) - 30*SH(3,student,12) + z =E= 
+     0 ; (LHS = 0)
+     
+
+---- TOU_L_CH  =L=  
+
+TOU_L_CH(1)..  - CH(1) + TOU(1,small) + TOU(1,medium) + TOU(1,large) =L= 0 ;
+     
+      (LHS = 0)
+     
+TOU_L_CH(2)..  - CH(2) + TOU(2,small) + TOU(2,medium) + TOU(2,large) =L= 0 ;
+     
+      (LHS = 0)
+     
+TOU_L_CH(3)..  - CH(3) + TOU(3,small) + TOU(3,medium) + TOU(3,large) =L= 0 ;
+     
+      (LHS = 0)
+     
+
+---- CAP_L_CH  =E=  
+
+CAP_L_CH(1)..  - CH(1) + CAP(1,small) + CAP(1,medium) + CAP(1,large) =E= 0 ;
+     
+      (LHS = 0)
+     
+CAP_L_CH(2)..  - CH(2) + CAP(2,small) + CAP(2,medium) + CAP(2,large) =E= 0 ;
+     
+      (LHS = 0)
+     
+CAP_L_CH(3)..  - CH(3) + CAP(3,small) + CAP(3,medium) + CAP(3,large) =E= 0 ;
+     
+      (LHS = 0)
+     
+
+---- IN_BALANCE  =E=  
+
+IN_BALANCE(1,main,1)..  Q(1,main,1) - SA(1,main,1) - IN(1,main,1) =E= 0 ;
+     
+      (LHS = 0)
+     
+IN_BALANCE(1,main,2)..  Q(1,main,2) - SA(1,main,2) - IN(1,main,2) =E= 0 ;
+     
+      (LHS = 0)
+     
+IN_BALANCE(1,main,3)..  Q(1,main,3) - SA(1,main,3) - IN(1,main,3) =E= 0 ;
+     
+      (LHS = 0)
+     
+REMAINING 105 ENTRIES SKIPPED
+
+
+---- SELLING  =E=  
+
+SELLING(1,main,1)..  - 100*CAP(1,small) - 120*CAP(1,medium) - 140*CAP(1,large)
+     
+      - 550*TOU(1,small) - 650*TOU(1,medium) - 900*TOU(1,large) + SA(1,main,1)
+     
+      + SH(1,main,1) =E= 0 ; (LHS = 0)
+     
+SELLING(1,main,2)..  - 100*CAP(1,small) - 120*CAP(1,medium) - 140*CAP(1,large)
+     
+      - 660*TOU(1,small) - 780*TOU(1,medium) - 1080*TOU(1,large) + SA(1,main,2)
+     
+      + SH(1,main,2) =E= 0 ; (LHS = 0)
+     
+SELLING(1,main,3)..  - 100*CAP(1,small) - 120*CAP(1,medium) - 140*CAP(1,large)
+     
+      - 715*TOU(1,small) - 845*TOU(1,medium) - 1170*TOU(1,large) + SA(1,main,3)
+     
+      + SH(1,main,3) =E= 0 ; (LHS = 0)
+     
+REMAINING 105 ENTRIES SKIPPED
+
+
+---- ISORDER  =L=  
+
+ISORDER(1,main,1)..  - 100000000*IO(1,main,1) + Q(1,main,1) =L= 0 ; (LHS = 0)
+     
+ISORDER(1,main,2)..  - 100000000*IO(1,main,2) + Q(1,main,2) =L= 0 ; (LHS = 0)
+     
+ISORDER(1,main,3)..  - 100000000*IO(1,main,3) + Q(1,main,3) =L= 0 ; (LHS = 0)
+     
+REMAINING 105 ENTRIES SKIPPED
+
+
+---- CAPACITY  =L=  
+
+CAPACITY(1,1)..  - 2000*CAP(1,small) - 3000*CAP(1,medium) - 4000*CAP(1,large)
+     
+      + 4*Q(1,main,1) + 5*Q(1,lux,1) + 2*Q(1,student,1) + 4*IN(1,main,1)
+     
+      + 5*IN(1,lux,1) + 2*IN(1,student,1) =L= 0 ; (LHS = 0)
+     
+CAPACITY(1,2)..  - 2000*CAP(1,small) - 3000*CAP(1,medium) - 4000*CAP(1,large)
+     
+      + 4*Q(1,main,2) + 5*Q(1,lux,2) + 2*Q(1,student,2) + 4*IN(1,main,2)
+     
+      + 5*IN(1,lux,2) + 2*IN(1,student,2) =L= 0 ; (LHS = 0)
+     
+CAPACITY(1,3)..  - 2000*CAP(1,small) - 3000*CAP(1,medium) - 4000*CAP(1,large)
+     
+      + 4*Q(1,main,3) + 5*Q(1,lux,3) + 2*Q(1,student,3) + 4*IN(1,main,3)
+     
+      + 5*IN(1,lux,3) + 2*IN(1,student,3) =L= 0 ; (LHS = 0)
+     
+REMAINING 33 ENTRIES SKIPPED
+
+
+---- CHSH  =L=  
+
+CHSH(1)..  - 10000000*CH(1) + SH(1,main,1) + SH(1,main,2) + SH(1,main,3)
+     
+      + SH(1,main,4) + SH(1,main,5) + SH(1,main,6) + SH(1,main,7) + SH(1,main,8)
+     
+      + SH(1,main,9) + SH(1,main,10) + SH(1,main,11) + SH(1,main,12)
+     
+      + SH(1,lux,1) + SH(1,lux,2) + SH(1,lux,3) + SH(1,lux,4) + SH(1,lux,5)
+     
+      + SH(1,lux,6) + SH(1,lux,7) + SH(1,lux,8) + SH(1,lux,9) + SH(1,lux,10)
+     
+      + SH(1,lux,11) + SH(1,lux,12) + SH(1,student,1) + SH(1,student,2)
+     
+      + SH(1,student,3) + SH(1,student,4) + SH(1,student,5) + SH(1,student,6)
+     
+      + SH(1,student,7) + SH(1,student,8) + SH(1,student,9) + SH(1,student,10)
+     
+      + SH(1,student,11) + SH(1,student,12) =L= 0 ; (LHS = 0)
+     
+CHSH(2)..  - 10000000*CH(2) + SH(2,main,1) + SH(2,main,2) + SH(2,main,3)
+     
+      + SH(2,main,4) + SH(2,main,5) + SH(2,main,6) + SH(2,main,7) + SH(2,main,8)
+     
+      + SH(2,main,9) + SH(2,main,10) + SH(2,main,11) + SH(2,main,12)
+     
+      + SH(2,lux,1) + SH(2,lux,2) + SH(2,lux,3) + SH(2,lux,4) + SH(2,lux,5)
+     
+      + SH(2,lux,6) + SH(2,lux,7) + SH(2,lux,8) + SH(2,lux,9) + SH(2,lux,10)
+     
+      + SH(2,lux,11) + SH(2,lux,12) + SH(2,student,1) + SH(2,student,2)
+     
+      + SH(2,student,3) + SH(2,student,4) + SH(2,student,5) + SH(2,student,6)
+     
+      + SH(2,student,7) + SH(2,student,8) + SH(2,student,9) + SH(2,student,10)
+     
+      + SH(2,student,11) + SH(2,student,12) =L= 0 ; (LHS = 0)
+     
+CHSH(3)..  - 10000000*CH(3) + SH(3,main,1) + SH(3,main,2) + SH(3,main,3)
+     
+      + SH(3,main,4) + SH(3,main,5) + SH(3,main,6) + SH(3,main,7) + SH(3,main,8)
+     
+      + SH(3,main,9) + SH(3,main,10) + SH(3,main,11) + SH(3,main,12)
+     
+      + SH(3,lux,1) + SH(3,lux,2) + SH(3,lux,3) + SH(3,lux,4) + SH(3,lux,5)
+     
+      + SH(3,lux,6) + SH(3,lux,7) + SH(3,lux,8) + SH(3,lux,9) + SH(3,lux,10)
+     
+      + SH(3,lux,11) + SH(3,lux,12) + SH(3,student,1) + SH(3,student,2)
+     
+      + SH(3,student,3) + SH(3,student,4) + SH(3,student,5) + SH(3,student,6)
+     
+      + SH(3,student,7) + SH(3,student,8) + SH(3,student,9) + SH(3,student,10)
+     
+      + SH(3,student,11) + SH(3,student,12) =L= 0 ; (LHS = 0)
+     
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows 01/10/18 17:57:26 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE Project Using MIP From line 71
+
+
+---- CH  
+
+CH(1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -50       obj
+       -1       TOU_L_CH(1)
+       -1       CAP_L_CH(1)
+  -1.000000E+7  CHSH(1)
+
+CH(2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+     -120       obj
+       -1       TOU_L_CH(2)
+       -1       CAP_L_CH(2)
+  -1.000000E+7  CHSH(2)
+
+CH(3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+     -240       obj
+       -1       TOU_L_CH(3)
+       -1       CAP_L_CH(3)
+  -1.000000E+7  CHSH(3)
+
+
+---- IO  
+
+IO(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+    -1010       obj
+  -1.000000E+8  ISORDER(1,main,1)
+
+IO(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+    -1010       obj
+  -1.000000E+8  ISORDER(1,main,2)
+
+IO(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+    -1010       obj
+  -1.000000E+8  ISORDER(1,main,3)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- CAP  
+
+CAP(1,small)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -20       obj
+        1       CAP_L_CH(1)
+     -100       SELLING(1,main,1)
+     -100       SELLING(1,main,2)
+     -100       SELLING(1,main,3)
+     -100       SELLING(1,main,4)
+     -100       SELLING(1,main,5)
+     -100       SELLING(1,main,6)
+     -100       SELLING(1,main,7)
+     -100       SELLING(1,main,8)
+     -100       SELLING(1,main,9)
+     -100       SELLING(1,main,10)
+     -100       SELLING(1,main,11)
+     -100       SELLING(1,main,12)
+      -90       SELLING(1,lux,1)
+      -90       SELLING(1,lux,2)
+      -90       SELLING(1,lux,3)
+      -90       SELLING(1,lux,4)
+      -90       SELLING(1,lux,5)
+      -90       SELLING(1,lux,6)
+      -90       SELLING(1,lux,7)
+      -90       SELLING(1,lux,8)
+      -90       SELLING(1,lux,9)
+      -90       SELLING(1,lux,10)
+      -90       SELLING(1,lux,11)
+      -90       SELLING(1,lux,12)
+      -50       SELLING(1,student,1)
+      -50       SELLING(1,student,2)
+      -50       SELLING(1,student,3)
+      -50       SELLING(1,student,4)
+      -50       SELLING(1,student,5)
+      -50       SELLING(1,student,6)
+      -50       SELLING(1,student,7)
+      -50       SELLING(1,student,8)
+      -50       SELLING(1,student,9)
+      -50       SELLING(1,student,10)
+      -50       SELLING(1,student,11)
+      -50       SELLING(1,student,12)
+    -2000       CAPACITY(1,1)
+    -2000       CAPACITY(1,2)
+    -2000       CAPACITY(1,3)
+    -2000       CAPACITY(1,4)
+    -2000       CAPACITY(1,5)
+    -2000       CAPACITY(1,6)
+    -2000       CAPACITY(1,7)
+    -2000       CAPACITY(1,8)
+    -2000       CAPACITY(1,9)
+    -2000       CAPACITY(1,10)
+    -2000       CAPACITY(1,11)
+    -2000       CAPACITY(1,12)
+
+CAP(1,medium)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -30       obj
+        1       CAP_L_CH(1)
+     -120       SELLING(1,main,1)
+     -120       SELLING(1,main,2)
+     -120       SELLING(1,main,3)
+     -120       SELLING(1,main,4)
+     -120       SELLING(1,main,5)
+     -120       SELLING(1,main,6)
+     -120       SELLING(1,main,7)
+     -120       SELLING(1,main,8)
+     -120       SELLING(1,main,9)
+     -120       SELLING(1,main,10)
+     -120       SELLING(1,main,11)
+     -120       SELLING(1,main,12)
+     -100       SELLING(1,lux,1)
+     -100       SELLING(1,lux,2)
+     -100       SELLING(1,lux,3)
+     -100       SELLING(1,lux,4)
+     -100       SELLING(1,lux,5)
+     -100       SELLING(1,lux,6)
+     -100       SELLING(1,lux,7)
+     -100       SELLING(1,lux,8)
+     -100       SELLING(1,lux,9)
+     -100       SELLING(1,lux,10)
+     -100       SELLING(1,lux,11)
+     -100       SELLING(1,lux,12)
+      -70       SELLING(1,student,1)
+      -70       SELLING(1,student,2)
+      -70       SELLING(1,student,3)
+      -70       SELLING(1,student,4)
+      -70       SELLING(1,student,5)
+      -70       SELLING(1,student,6)
+      -70       SELLING(1,student,7)
+      -70       SELLING(1,student,8)
+      -70       SELLING(1,student,9)
+      -70       SELLING(1,student,10)
+      -70       SELLING(1,student,11)
+      -70       SELLING(1,student,12)
+    -3000       CAPACITY(1,1)
+    -3000       CAPACITY(1,2)
+    -3000       CAPACITY(1,3)
+    -3000       CAPACITY(1,4)
+    -3000       CAPACITY(1,5)
+    -3000       CAPACITY(1,6)
+    -3000       CAPACITY(1,7)
+    -3000       CAPACITY(1,8)
+    -3000       CAPACITY(1,9)
+    -3000       CAPACITY(1,10)
+    -3000       CAPACITY(1,11)
+    -3000       CAPACITY(1,12)
+
+CAP(1,large)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -40       obj
+        1       CAP_L_CH(1)
+     -140       SELLING(1,main,1)
+     -140       SELLING(1,main,2)
+     -140       SELLING(1,main,3)
+     -140       SELLING(1,main,4)
+     -140       SELLING(1,main,5)
+     -140       SELLING(1,main,6)
+     -140       SELLING(1,main,7)
+     -140       SELLING(1,main,8)
+     -140       SELLING(1,main,9)
+     -140       SELLING(1,main,10)
+     -140       SELLING(1,main,11)
+     -140       SELLING(1,main,12)
+     -110       SELLING(1,lux,1)
+     -110       SELLING(1,lux,2)
+     -110       SELLING(1,lux,3)
+     -110       SELLING(1,lux,4)
+     -110       SELLING(1,lux,5)
+     -110       SELLING(1,lux,6)
+     -110       SELLING(1,lux,7)
+     -110       SELLING(1,lux,8)
+     -110       SELLING(1,lux,9)
+     -110       SELLING(1,lux,10)
+     -110       SELLING(1,lux,11)
+     -110       SELLING(1,lux,12)
+     -120       SELLING(1,student,1)
+     -120       SELLING(1,student,2)
+     -120       SELLING(1,student,3)
+     -120       SELLING(1,student,4)
+     -120       SELLING(1,student,5)
+     -120       SELLING(1,student,6)
+     -120       SELLING(1,student,7)
+     -120       SELLING(1,student,8)
+     -120       SELLING(1,student,9)
+     -120       SELLING(1,student,10)
+     -120       SELLING(1,student,11)
+     -120       SELLING(1,student,12)
+    -4000       CAPACITY(1,1)
+    -4000       CAPACITY(1,2)
+    -4000       CAPACITY(1,3)
+    -4000       CAPACITY(1,4)
+    -4000       CAPACITY(1,5)
+    -4000       CAPACITY(1,6)
+    -4000       CAPACITY(1,7)
+    -4000       CAPACITY(1,8)
+    -4000       CAPACITY(1,9)
+    -4000       CAPACITY(1,10)
+    -4000       CAPACITY(1,11)
+    -4000       CAPACITY(1,12)
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- TOU  
+
+TOU(1,small)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -50       obj
+        1       TOU_L_CH(1)
+     -550       SELLING(1,main,1)
+     -660       SELLING(1,main,2)
+     -715       SELLING(1,main,3)
+     -770       SELLING(1,main,4)
+     -495       SELLING(1,main,5)
+     -605       SELLING(1,main,6)
+     -880       SELLING(1,main,7)
+     -935       SELLING(1,main,8)
+     -990       SELLING(1,main,9)
+     -715       SELLING(1,main,10)
+     -770       SELLING(1,main,11)
+    -1100       SELLING(1,main,12)
+     -550       SELLING(1,lux,1)
+     -660       SELLING(1,lux,2)
+     -715       SELLING(1,lux,3)
+     -770       SELLING(1,lux,4)
+     -495       SELLING(1,lux,5)
+     -605       SELLING(1,lux,6)
+     -880       SELLING(1,lux,7)
+     -935       SELLING(1,lux,8)
+     -990       SELLING(1,lux,9)
+     -715       SELLING(1,lux,10)
+     -770       SELLING(1,lux,11)
+    -1100       SELLING(1,lux,12)
+     -550       SELLING(1,student,1)
+     -660       SELLING(1,student,2)
+     -715       SELLING(1,student,3)
+     -770       SELLING(1,student,4)
+     -495       SELLING(1,student,5)
+     -605       SELLING(1,student,6)
+     -880       SELLING(1,student,7)
+     -935       SELLING(1,student,8)
+     -990       SELLING(1,student,9)
+     -715       SELLING(1,student,10)
+     -770       SELLING(1,student,11)
+    -1100       SELLING(1,student,12)
+
+TOU(1,medium)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -50       obj
+        1       TOU_L_CH(1)
+     -650       SELLING(1,main,1)
+     -780       SELLING(1,main,2)
+     -845       SELLING(1,main,3)
+     -910       SELLING(1,main,4)
+     -585       SELLING(1,main,5)
+     -715       SELLING(1,main,6)
+    -1040       SELLING(1,main,7)
+    -1105       SELLING(1,main,8)
+    -1170       SELLING(1,main,9)
+     -845       SELLING(1,main,10)
+     -910       SELLING(1,main,11)
+    -1300       SELLING(1,main,12)
+     -650       SELLING(1,lux,1)
+     -780       SELLING(1,lux,2)
+     -845       SELLING(1,lux,3)
+     -910       SELLING(1,lux,4)
+     -585       SELLING(1,lux,5)
+     -715       SELLING(1,lux,6)
+    -1040       SELLING(1,lux,7)
+    -1105       SELLING(1,lux,8)
+    -1170       SELLING(1,lux,9)
+     -845       SELLING(1,lux,10)
+     -910       SELLING(1,lux,11)
+    -1300       SELLING(1,lux,12)
+     -650       SELLING(1,student,1)
+     -780       SELLING(1,student,2)
+     -845       SELLING(1,student,3)
+     -910       SELLING(1,student,4)
+     -585       SELLING(1,student,5)
+     -715       SELLING(1,student,6)
+    -1040       SELLING(1,student,7)
+    -1105       SELLING(1,student,8)
+    -1170       SELLING(1,student,9)
+     -845       SELLING(1,student,10)
+     -910       SELLING(1,student,11)
+    -1300       SELLING(1,student,12)
+
+TOU(1,large)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -50       obj
+        1       TOU_L_CH(1)
+     -900       SELLING(1,main,1)
+    -1080       SELLING(1,main,2)
+    -1170       SELLING(1,main,3)
+    -1260       SELLING(1,main,4)
+     -810       SELLING(1,main,5)
+     -990       SELLING(1,main,6)
+    -1440       SELLING(1,main,7)
+    -1530       SELLING(1,main,8)
+    -1620       SELLING(1,main,9)
+    -1170       SELLING(1,main,10)
+    -1260       SELLING(1,main,11)
+    -1800       SELLING(1,main,12)
+     -900       SELLING(1,lux,1)
+    -1080       SELLING(1,lux,2)
+    -1170       SELLING(1,lux,3)
+    -1260       SELLING(1,lux,4)
+     -810       SELLING(1,lux,5)
+     -990       SELLING(1,lux,6)
+    -1440       SELLING(1,lux,7)
+    -1530       SELLING(1,lux,8)
+    -1620       SELLING(1,lux,9)
+    -1170       SELLING(1,lux,10)
+    -1260       SELLING(1,lux,11)
+    -1800       SELLING(1,lux,12)
+     -900       SELLING(1,student,1)
+    -1080       SELLING(1,student,2)
+    -1170       SELLING(1,student,3)
+    -1260       SELLING(1,student,4)
+     -810       SELLING(1,student,5)
+     -990       SELLING(1,student,6)
+    -1440       SELLING(1,student,7)
+    -1530       SELLING(1,student,8)
+    -1620       SELLING(1,student,9)
+    -1170       SELLING(1,student,10)
+    -1260       SELLING(1,student,11)
+    -1800       SELLING(1,student,12)
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- Q  
+
+Q(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -5       obj
+        1       IN_BALANCE(1,main,1)
+        1       ISORDER(1,main,1)
+        4       CAPACITY(1,1)
+
+Q(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -5       obj
+        1       IN_BALANCE(1,main,2)
+        1       ISORDER(1,main,2)
+        4       CAPACITY(1,2)
+
+Q(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -5       obj
+        1       IN_BALANCE(1,main,3)
+        1       ISORDER(1,main,3)
+        4       CAPACITY(1,3)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- SA  
+
+SA(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       20       obj
+       -1       IN_BALANCE(1,main,1)
+        1       SELLING(1,main,1)
+
+SA(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       20       obj
+       -1       IN_BALANCE(1,main,2)
+        1       SELLING(1,main,2)
+
+SA(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       20       obj
+       -1       IN_BALANCE(1,main,3)
+        1       SELLING(1,main,3)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- IN  
+
+IN(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -20       obj
+       -1       IN_BALANCE(1,main,1)
+        1       IN_BALANCE(2,main,1)
+        4       CAPACITY(1,1)
+
+IN(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -20       obj
+       -1       IN_BALANCE(1,main,2)
+        1       IN_BALANCE(2,main,2)
+        4       CAPACITY(1,2)
+
+IN(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -20       obj
+       -1       IN_BALANCE(1,main,3)
+        1       IN_BALANCE(2,main,3)
+        4       CAPACITY(1,3)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- SH  
+
+SH(1,main,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -10       obj
+        1       SELLING(1,main,1)
+        1       CHSH(1)
+
+SH(1,main,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -10       obj
+        1       SELLING(1,main,2)
+        1       CHSH(1)
+
+SH(1,main,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -10       obj
+        1       SELLING(1,main,3)
+        1       CHSH(1)
+
+REMAINING 105 ENTRIES SKIPPED
+
+---- z  
+
+z
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       obj
+
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows 01/10/18 17:57:26 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE Project Using MIP From line 71
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           8     SINGLE EQUATIONS          370
+BLOCKS OF VARIABLES           9     SINGLE VARIABLES          562
+NON ZERO ELEMENTS         2,497     DISCRETE VARIABLES        129
+
+
+GENERATION TIME      =        0.031 SECONDS      4 MB  24.1.2 r40979 WEX-WEI
+
+
+EXECUTION TIME       =        0.031 SECONDS      4 MB  24.1.2 r40979 WEX-WEI
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows 01/10/18 17:57:26 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Project Using MIP From line 71
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   Project             OBJECTIVE  z
+     TYPE    MIP                 DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  71
+
+**** SOLVER STATUS     1 Normal Completion         
+**** MODEL STATUS      8 Integer Solution          
+**** OBJECTIVE VALUE          -160635.0000
+
+ RESOURCE USAGE, LIMIT          0.312      1000.000
+ ITERATION COUNT, LIMIT      3474    2000000000
+
+IBM ILOG CPLEX   24.1.2 r40979 Released Jun 16, 2013 WEI x86_64/MS Windows    
+--- GAMS/Cplex licensed for continuous and discrete problems.
+Cplex 12.5.1.0
+
+MIP status(102): integer optimal, tolerance
+Cplex Time: 0.30sec (det. 159.72 ticks)
+Fixing integer variables, and solving final LP...
+Fixed MIP status(1): optimal
+Cplex Time: 0.00sec (det. 0.80 ticks)
+Solution satisfies tolerances.
+
+MIP Solution:      -160635.000000    (3342 iterations, 86 nodes)
+Final Solve:       -160635.000000    (132 iterations)
+
+Best possible:     -176309.540951
+Absolute gap:        15674.540951
+Relative gap:            0.097579
+
+
+                       LOWER     LEVEL     UPPER    MARGINAL
+
+---- EQU obj             .         .         .        1.000      
+
+---- EQU TOU_L_CH  
+
+     LOWER     LEVEL     UPPER    MARGINAL
+
+1     -INF       .         .         .         
+2     -INF     -1.000      .         .         
+3     -INF       .         .         .         
+
+---- EQU CAP_L_CH  
+
+     LOWER     LEVEL     UPPER    MARGINAL
+
+1      .         .         .         .         
+2      .         .         .         .         
+3      .         .         .         .         
+
+---- EQU IN_BALANCE  
+
+                LOWER     LEVEL     UPPER    MARGINAL
+
+1.main   .1       .         .         .       30.000      
+1.main   .2       .         .         .       30.000      
+1.main   .3       .         .         .       30.000      
+1.main   .4       .         .         .       30.000      
+1.main   .5       .         .         .       30.000      
+1.main   .6       .         .         .       30.000      
+1.main   .7       .         .         .       30.000      
+1.main   .8       .         .         .       30.000      
+1.main   .9       .         .         .       30.000      
+1.main   .10      .         .         .       30.000      
+1.main   .11      .         .         .       30.000      
+1.main   .12      .         .         .       30.000      
+1.lux    .1       .         .         .       60.000      
+1.lux    .2       .         .         .       60.000      
+1.lux    .3       .         .         .       60.000      
+1.lux    .4       .         .         .       60.000      
+1.lux    .5       .         .         .       60.000      
+1.lux    .6       .         .         .       60.000      
+1.lux    .7       .         .         .       60.000      
+1.lux    .8       .         .         .       60.000      
+1.lux    .9       .         .         .       60.000      
+1.lux    .10      .         .         .       60.000      
+1.lux    .11      .         .         .       60.000      
+1.lux    .12      .         .         .       60.000      
+1.student.1       .         .         .       24.000      
+1.student.2       .         .         .       24.000      
+1.student.3       .         .         .       24.000      
+1.student.4       .         .         .       24.000      
+1.student.5       .         .         .       24.000      
+1.student.6       .         .         .       24.000      
+1.student.7       .         .         .       24.000      
+1.student.8       .         .         .       24.000      
+1.student.9       .         .         .       24.000      
+1.student.10      .         .         .       24.000      
+1.student.11      .         .         .       24.000      
+1.student.12      .         .         .       24.000      
+2.main   .1       .         .         .       17.000      
+2.main   .2       .         .         .       17.000      
+2.main   .3       .         .         .       17.000      
+2.main   .4       .         .         .       17.000      
+2.main   .5       .         .         .       17.000      
+2.main   .6       .         .         .       17.000      
+2.main   .7       .         .         .       17.000      
+2.main   .8       .         .         .       17.000      
+2.main   .9       .         .         .       17.000      
+2.main   .10      .         .         .       17.000      
+2.main   .11      .         .         .       17.000      
+2.main   .12      .         .         .       17.000      
+2.lux    .1       .         .         .       30.000      
+2.lux    .2       .         .         .       30.000      
+2.lux    .3       .         .         .       30.000      
+2.lux    .4       .         .         .       30.000      
+2.lux    .5       .         .         .       30.000      
+2.lux    .6       .         .         .       30.000      
+2.lux    .7       .         .         .       30.000      
+2.lux    .8       .         .         .       30.000      
+2.lux    .9       .         .         .       30.000      
+2.lux    .10      .         .         .       30.000      
+2.lux    .11      .         .         .       30.000      
+2.lux    .12      .         .         .       30.000      
+2.student.1       .         .         .       12.000      
+2.student.2       .         .         .       12.000      
+2.student.3       .         .         .       12.000      
+2.student.4       .         .         .       12.000      
+2.student.5       .         .         .       12.000      
+2.student.6       .         .         .       12.000      
+2.student.7       .         .         .       12.000      
+2.student.8       .         .         .       12.000      
+2.student.9       .         .         .       12.000      
+2.student.10      .         .         .       12.000      
+2.student.11      .         .         .       12.000      
+2.student.12      .         .         .       12.000      
+3.main   .1       .         .         .       49.000      
+3.main   .2       .         .         .       49.000      
+3.main   .3       .         .         .       49.000      
+3.main   .4       .         .         .       49.000      
+3.main   .5       .         .         .       49.000      
+3.main   .6       .         .         .       49.000      
+3.main   .7       .         .         .       49.000      
+3.main   .8       .         .         .       49.000      
+3.main   .9       .         .         .       49.000      
+3.main   .10      .         .         .       49.000      
+3.main   .11      .         .         .       49.000      
+3.main   .12      .         .         .       49.000      
+3.lux    .1       .         .         .       60.000      
+3.lux    .2       .         .         .       60.000      
+3.lux    .3       .         .         .       60.000      
+3.lux    .4       .         .         .       60.000      
+3.lux    .5       .         .         .       60.000      
+3.lux    .6       .         .         .       60.000      
+3.lux    .7       .         .         .       60.000      
+3.lux    .8       .         .         .       60.000      
+3.lux    .9       .         .         .       60.000      
+3.lux    .10      .         .         .       60.000      
+3.lux    .11      .         .         .       60.000      
+3.lux    .12      .         .         .       60.000      
+3.student.1       .         .         .       24.000      
+3.student.2       .         .         .       24.000      
+3.student.3       .         .         .       24.000      
+3.student.4       .         .         .       24.000      
+3.student.5       .         .         .       24.000      
+3.student.6       .         .         .       24.000      
+3.student.7       .         .         .       24.000      
+3.student.8       .         .         .       24.000      
+3.student.9       .         .         .       24.000      
+3.student.10      .         .         .       24.000      
+3.student.11      .         .         .       24.000      
+3.student.12      .         .         .       24.000      
+
+---- EQU SELLING  
+
+                LOWER     LEVEL     UPPER    MARGINAL
+
+1.main   .1       .         .         .       10.000      
+1.main   .2       .         .         .       10.000      
+1.main   .3       .         .         .       10.000      
+1.main   .4       .         .         .       10.000      
+1.main   .5       .         .         .       10.000      
+1.main   .6       .         .         .       10.000      
+1.main   .7       .         .         .       10.000      
+1.main   .8       .         .         .       10.000      
+1.main   .9       .         .         .       10.000      
+1.main   .10      .         .         .       10.000      
+1.main   .11      .         .         .       10.000      
+1.main   .12      .         .         .       10.000      
+1.lux    .1       .         .         .       15.000      
+1.lux    .2       .         .         .       15.000      
+1.lux    .3       .         .         .       15.000      
+1.lux    .4       .         .         .       15.000      
+1.lux    .5       .         .         .       15.000      
+1.lux    .6       .         .         .       15.000      
+1.lux    .7       .         .         .       15.000      
+1.lux    .8       .         .         .       15.000      
+1.lux    .9       .         .         .       15.000      
+1.lux    .10      .         .         .       15.000      
+1.lux    .11      .         .         .       15.000      
+1.lux    .12      .         .         .       15.000      
+1.student.1       .         .         .        6.000      
+1.student.2       .         .         .        6.000      
+1.student.3       .         .         .        6.000      
+1.student.4       .         .         .        6.000      
+1.student.5       .         .         .        6.000      
+1.student.6       .         .         .        6.000      
+1.student.7       .         .         .        6.000      
+1.student.8       .         .         .        6.000      
+1.student.9       .         .         .        6.000      
+1.student.10      .         .         .        6.000      
+1.student.11      .         .         .        6.000      
+1.student.12      .         .         .        6.000      
+2.main   .1       .         .         .       -3.000      
+2.main   .2       .         .         .       -3.000      
+2.main   .3       .         .         .       -3.000      
+2.main   .4       .         .         .       -3.000      
+2.main   .5       .         .         .       -3.000      
+2.main   .6       .         .         .       -3.000      
+2.main   .7       .         .         .       -3.000      
+2.main   .8       .         .         .       -3.000      
+2.main   .9       .         .         .       -3.000      
+2.main   .10      .         .         .       -3.000      
+2.main   .11      .         .         .       -3.000      
+2.main   .12      .         .         .       -3.000      
+2.lux    .1       .         .         .      -15.000      
+2.lux    .2       .         .         .      -15.000      
+2.lux    .3       .         .         .      -15.000      
+2.lux    .4       .         .         .      -15.000      
+2.lux    .5       .         .         .      -15.000      
+2.lux    .6       .         .         .      -15.000      
+2.lux    .7       .         .         .      -15.000      
+2.lux    .8       .         .         .      -15.000      
+2.lux    .9       .         .         .      -15.000      
+2.lux    .10      .         .         .      -15.000      
+2.lux    .11      .         .         .      -15.000      
+2.lux    .12      .         .         .      -15.000      
+2.student.1       .         .         .       -6.000      
+2.student.2       .         .         .       -6.000      
+2.student.3       .         .         .       -6.000      
+2.student.4       .         .         .       -6.000      
+2.student.5       .         .         .       -6.000      
+2.student.6       .         .         .       -6.000      
+2.student.7       .         .         .       -6.000      
+2.student.8       .         .         .       -6.000      
+2.student.9       .         .         .       -6.000      
+2.student.10      .         .         .       -6.000      
+2.student.11      .         .         .       -6.000      
+2.student.12      .         .         .       -6.000      
+3.main   .1       .         .         .       10.000      
+3.main   .2       .         .         .       10.000      
+3.main   .3       .         .         .       10.000      
+3.main   .4       .         .         .       10.000      
+3.main   .5       .         .         .       10.000      
+3.main   .6       .         .         .       10.000      
+3.main   .7       .         .         .       10.000      
+3.main   .8       .         .         .       10.000      
+3.main   .9       .         .         .       10.000      
+3.main   .10      .         .         .       10.000      
+3.main   .11      .         .         .       10.000      
+3.main   .12      .         .         .       10.000      
+3.lux    .1       .         .         .       15.000      
+3.lux    .2       .         .         .       15.000      
+3.lux    .3       .         .         .       15.000      
+3.lux    .4       .         .         .       15.000      
+3.lux    .5       .         .         .       15.000      
+3.lux    .6       .         .         .       15.000      
+3.lux    .7       .         .         .       15.000      
+3.lux    .8       .         .         .       15.000      
+3.lux    .9       .         .         .       15.000      
+3.lux    .10      .         .         .       15.000      
+3.lux    .11      .         .         .       15.000      
+3.lux    .12      .         .         .       15.000      
+3.student.1       .         .         .        6.000      
+3.student.2       .         .         .        6.000      
+3.student.3       .         .         .        6.000      
+3.student.4       .         .         .        6.000      
+3.student.5       .         .         .        6.000      
+3.student.6       .         .         .        6.000      
+3.student.7       .         .         .        6.000      
+3.student.8       .         .         .        6.000      
+3.student.9       .         .         .        6.000      
+3.student.10      .         .         .        6.000      
+3.student.11      .         .         .        6.000      
+3.student.12      .         .         .        6.000      
+
+---- EQU ISORDER  
+
+                LOWER     LEVEL     UPPER    MARGINAL
+
+1.main   .1      -INF       .         .         .         
+1.main   .2      -INF       .         .         .         
+1.main   .3      -INF       .         .         .         
+1.main   .4      -INF       .         .         .         
+1.main   .5      -INF       .         .         .         
+1.main   .6      -INF       .         .         .         
+1.main   .7      -INF       .         .         .         
+1.main   .8      -INF       .         .         .         
+1.main   .9      -INF       .         .         .         
+1.main   .10     -INF       .         .         .         
+1.main   .11     -INF       .         .         .         
+1.main   .12     -INF       .         .         .         
+1.lux    .1      -INF  -1.000E+8      .         .         
+1.lux    .2      -INF  -1.000E+8      .         .         
+1.lux    .3      -INF  -1.000E+8      .         .         
+1.lux    .4      -INF  -1.000E+8      .         .         
+1.lux    .5      -INF  -1.000E+8      .         .         
+1.lux    .6      -INF  -1.000E+8      .         .         
+1.lux    .7      -INF  -1.000E+8      .         .         
+1.lux    .8      -INF  -1.000E+8      .         .         
+1.lux    .9      -INF  -1.000E+8      .         .         
+1.lux    .10     -INF  -1.000E+8      .         .         
+1.lux    .11     -INF  -1.000E+8      .         .         
+1.lux    .12     -INF  -1.000E+8      .         .         
+1.student.1      -INF  -1.000E+8      .         .         
+1.student.2      -INF  -1.000E+8      .         .         
+1.student.3      -INF  -1.000E+8      .         .         
+1.student.4      -INF  -1.000E+8      .         .         
+1.student.5      -INF  -1.000E+8      .         .         
+1.student.6      -INF  -1.000E+8      .         .         
+1.student.7      -INF  -1.000E+8      .         .         
+1.student.8      -INF  -1.000E+8      .         .         
+1.student.9      -INF  -1.000E+8      .         .         
+1.student.10     -INF  -1.000E+8      .         .         
+1.student.11     -INF  -1.000E+8      .         .         
+1.student.12     -INF  -1.000E+8      .         .         
+2.main   .1      -INF  -1.000E+8      .         .         
+2.main   .2      -INF  -1.000E+8      .         .         
+2.main   .3      -INF  -1.000E+8      .         .         
+2.main   .4      -INF  -1.000E+8      .         .         
+2.main   .5      -INF  -1.000E+8      .         .         
+2.main   .6      -INF  -1.000E+8      .         .         
+2.main   .7      -INF  -1.000E+8      .         .         
+2.main   .8      -INF  -1.000E+8      .         .         
+2.main   .9      -INF  -1.000E+8      .         .         
+2.main   .10     -INF  -1.000E+8      .         .         
+2.main   .11     -INF  -1.000E+8      .         .         
+2.main   .12     -INF  -1.000E+8      .         .         
+2.lux    .1      -INF  -1.000E+8      .         .         
+2.lux    .2      -INF  -1.000E+8      .         .         
+2.lux    .3      -INF  -1.000E+8      .         .         
+2.lux    .4      -INF  -1.000E+8      .         .         
+2.lux    .5      -INF  -1.000E+8      .         .         
+2.lux    .6      -INF  -1.000E+8      .         .         
+2.lux    .7      -INF  -1.000E+8      .         .         
+2.lux    .8      -INF  -1.000E+8      .         .         
+2.lux    .9      -INF  -1.000E+8      .         .         
+2.lux    .10     -INF  -1.000E+8      .         .         
+2.lux    .11     -INF  -1.000E+8      .         .         
+2.lux    .12     -INF  -1.000E+8      .         .         
+2.student.1      -INF  -1.000E+8      .         .         
+2.student.2      -INF  -1.000E+8      .         .         
+2.student.3      -INF  -1.000E+8      .         .         
+2.student.4      -INF  -1.000E+8      .         .         
+2.student.5      -INF  -1.000E+8      .         .         
+2.student.6      -INF  -1.000E+8      .         .         
+2.student.7      -INF  -1.000E+8      .         .         
+2.student.8      -INF  -1.000E+8      .         .         
+2.student.9      -INF  -1.000E+8      .         .         
+2.student.10     -INF  -1.000E+8      .         .         
+2.student.11     -INF  -1.000E+8      .         .         
+2.student.12     -INF  -1.000E+8      .         .         
+3.main   .1      -INF       .         .       -8.000      
+3.main   .2      -INF       .         .       -8.000      
+3.main   .3      -INF       .         .       -8.000      
+3.main   .4      -INF       .         .       -8.000      
+3.main   .5      -INF       .         .       -8.000      
+3.main   .6      -INF       .         .       -8.000      
+3.main   .7      -INF       .         .       -8.000      
+3.main   .8      -INF       .         .       -8.000      
+3.main   .9      -INF       .         .       -8.000      
+3.main   .10     -INF       .         .       -8.000      
+3.main   .11     -INF       .         .       -8.000      
+3.main   .12     -INF       .         .       -8.000      
+3.lux    .1      -INF  -1.000E+8      .         .         
+3.lux    .2      -INF  -1.000E+8      .         .         
+3.lux    .3      -INF  -1.000E+8      .         .         
+3.lux    .4      -INF  -1.000E+8      .         .         
+3.lux    .5      -INF  -1.000E+8      .         .         
+3.lux    .6      -INF  -1.000E+8      .         .         
+3.lux    .7      -INF  -1.000E+8      .         .         
+3.lux    .8      -INF  -1.000E+8      .         .         
+3.lux    .9      -INF  -1.000E+8      .         .         
+3.lux    .10     -INF  -1.000E+8      .         .         
+3.lux    .11     -INF  -1.000E+8      .         .         
+3.lux    .12     -INF  -1.000E+8      .         .         
+3.student.1      -INF  -1.000E+8      .         .         
+3.student.2      -INF  -1.000E+8      .         .         
+3.student.3      -INF  -1.000E+8      .         .         
+3.student.4      -INF  -1.000E+8      .         .         
+3.student.5      -INF  -1.000E+8      .         .         
+3.student.6      -INF  -1.000E+8      .         .         
+3.student.7      -INF  -1.000E+8      .         .         
+3.student.8      -INF  -1.000E+8      .         .         
+3.student.9      -INF  -1.000E+8      .         .         
+3.student.10     -INF  -1.000E+8      .         .         
+3.student.11     -INF  -1.000E+8      .         .         
+3.student.12     -INF  -1.000E+8      .         .         
+
+---- EQU CAPACITY  
+
+        LOWER     LEVEL     UPPER    MARGINAL
+
+1.1      -INF       .         .       -9.000      
+1.2      -INF       .         .       -9.000      
+1.3      -INF       .         .       -9.000      
+1.4      -INF       .         .       -9.000      
+1.5      -INF       .         .       -9.000      
+1.6      -INF       .         .       -9.000      
+1.7      -INF       .         .       -9.000      
+1.8      -INF       .         .       -9.000      
+1.9      -INF       .         .       -9.000      
+1.10     -INF       .         .       -9.000      
+1.11     -INF       .         .       -9.000      
+1.12     -INF       .         .       -9.000      
+2.1      -INF       .         .       -3.000      
+2.2      -INF       .         .       -3.000      
+2.3      -INF       .         .       -3.000      
+2.4      -INF       .         .       -3.000      
+2.5      -INF       .         .       -3.000      
+2.6      -INF       .         .       -3.000      
+2.7      -INF       .         .       -3.000      
+2.8      -INF       .         .       -3.000      
+2.9      -INF       .         .       -3.000      
+2.10     -INF       .         .       -3.000      
+2.11     -INF       .         .       -3.000      
+2.12     -INF       .         .       -3.000      
+3.1      -INF       .         .       -9.000      
+3.2      -INF       .         .       -9.000      
+3.3      -INF       .         .       -9.000      
+3.4      -INF       .         .       -9.000      
+3.5      -INF       .         .       -9.000      
+3.6      -INF       .         .       -9.000      
+3.7      -INF       .         .       -9.000      
+3.8      -INF       .         .       -9.000      
+3.9      -INF       .         .       -9.000      
+3.10     -INF       .         .       -9.000      
+3.11     -INF       .         .       -9.000      
+3.12     -INF       .         .       -9.000      
+
+---- EQU CHSH  
+
+     LOWER     LEVEL     UPPER    MARGINAL
+
+1     -INF  -9.984E+6      .         .         
+2     -INF  -1.000E+7      .         .         
+3     -INF  -9.978E+6      .         .         
+
+---- VAR CH  
+
+     LOWER     LEVEL     UPPER    MARGINAL
+
+1      .        1.000     1.000    50.000      
+2      .        1.000     1.000   120.000      
+3      .        1.000     1.000   240.000      
+
+---- VAR IO  
+
+                LOWER     LEVEL     UPPER    MARGINAL
+
+1.main   .1       .         .        1.000  1010.000      
+1.main   .2       .         .        1.000  1010.000      
+1.main   .3       .         .        1.000  1010.000      
+1.main   .4       .         .        1.000  1010.000      
+1.main   .5       .         .        1.000  1010.000      
+1.main   .6       .         .        1.000  1010.000      
+1.main   .7       .         .        1.000  1010.000      
+1.main   .8       .         .        1.000  1010.000      
+1.main   .9       .         .        1.000  1010.000      
+1.main   .10      .         .        1.000  1010.000      
+1.main   .11      .         .        1.000  1010.000      
+1.main   .12      .         .        1.000  1010.000      
+1.lux    .1       .        1.000     1.000  1010.000      
+1.lux    .2       .        1.000     1.000  1010.000      
+1.lux    .3       .        1.000     1.000  1010.000      
+1.lux    .4       .        1.000     1.000  1010.000      
+1.lux    .5       .        1.000     1.000  1010.000      
+1.lux    .6       .        1.000     1.000  1010.000      
+1.lux    .7       .        1.000     1.000  1010.000      
+1.lux    .8       .        1.000     1.000  1010.000      
+1.lux    .9       .        1.000     1.000  1010.000      
+1.lux    .10      .        1.000     1.000  1010.000      
+1.lux    .11      .        1.000     1.000  1010.000      
+1.lux    .12      .        1.000     1.000  1010.000      
+1.student.1       .        1.000     1.000  1010.000      
+1.student.2       .        1.000     1.000  1010.000      
+1.student.3       .        1.000     1.000  1010.000      
+1.student.4       .        1.000     1.000  1010.000      
+1.student.5       .        1.000     1.000  1010.000      
+1.student.6       .        1.000     1.000  1010.000      
+1.student.7       .        1.000     1.000  1010.000      
+1.student.8       .        1.000     1.000  1010.000      
+1.student.9       .        1.000     1.000  1010.000      
+1.student.10      .        1.000     1.000  1010.000      
+1.student.11      .        1.000     1.000  1010.000      
+1.student.12      .        1.000     1.000  1010.000      
+2.main   .1       .        1.000     1.000  1020.000      
+2.main   .2       .        1.000     1.000  1020.000      
+2.main   .3       .        1.000     1.000  1020.000      
+2.main   .4       .        1.000     1.000  1020.000      
+2.main   .5       .        1.000     1.000  1020.000      
+2.main   .6       .        1.000     1.000  1020.000      
+2.main   .7       .        1.000     1.000  1020.000      
+2.main   .8       .        1.000     1.000  1020.000      
+2.main   .9       .        1.000     1.000  1020.000      
+2.main   .10      .        1.000     1.000  1020.000      
+2.main   .11      .        1.000     1.000  1020.000      
+2.main   .12      .        1.000     1.000  1020.000      
+2.lux    .1       .        1.000     1.000  1020.000      
+2.lux    .2       .        1.000     1.000  1020.000      
+2.lux    .3       .        1.000     1.000  1020.000      
+2.lux    .4       .        1.000     1.000  1020.000      
+2.lux    .5       .        1.000     1.000  1020.000      
+2.lux    .6       .        1.000     1.000  1020.000      
+2.lux    .7       .        1.000     1.000  1020.000      
+2.lux    .8       .        1.000     1.000  1020.000      
+2.lux    .9       .        1.000     1.000  1020.000      
+2.lux    .10      .        1.000     1.000  1020.000      
+2.lux    .11      .        1.000     1.000  1020.000      
+2.lux    .12      .        1.000     1.000  1020.000      
+2.student.1       .        1.000     1.000  1020.000      
+2.student.2       .        1.000     1.000  1020.000      
+2.student.3       .        1.000     1.000  1020.000      
+2.student.4       .        1.000     1.000  1020.000      
+2.student.5       .        1.000     1.000  1020.000      
+2.student.6       .        1.000     1.000  1020.000      
+2.student.7       .        1.000     1.000  1020.000      
+2.student.8       .        1.000     1.000  1020.000      
+2.student.9       .        1.000     1.000  1020.000      
+2.student.10      .        1.000     1.000  1020.000      
+2.student.11      .        1.000     1.000  1020.000      
+2.student.12      .        1.000     1.000  1020.000      
+3.main   .1       .         .        1.000 -8.000E+8      
+3.main   .2       .         .        1.000 -8.000E+8      
+3.main   .3       .         .        1.000 -8.000E+8      
+3.main   .4       .         .        1.000 -8.000E+8      
+3.main   .5       .         .        1.000 -8.000E+8      
+3.main   .6       .         .        1.000 -8.000E+8      
+3.main   .7       .         .        1.000 -8.000E+8      
+3.main   .8       .         .        1.000 -8.000E+8      
+3.main   .9       .         .        1.000 -8.000E+8      
+3.main   .10      .         .        1.000 -8.000E+8      
+3.main   .11      .         .        1.000 -8.000E+8      
+3.main   .12      .         .        1.000 -8.000E+8      
+3.lux    .1       .        1.000     1.000  1015.000      
+3.lux    .2       .        1.000     1.000  1015.000      
+3.lux    .3       .        1.000     1.000  1015.000      
+3.lux    .4       .        1.000     1.000  1015.000      
+3.lux    .5       .        1.000     1.000  1015.000      
+3.lux    .6       .        1.000     1.000  1015.000      
+3.lux    .7       .        1.000     1.000  1015.000      
+3.lux    .8       .        1.000     1.000  1015.000      
+3.lux    .9       .        1.000     1.000  1015.000      
+3.lux    .10      .        1.000     1.000  1015.000      
+3.lux    .11      .        1.000     1.000  1015.000      
+3.lux    .12      .        1.000     1.000  1015.000      
+3.student.1       .        1.000     1.000  1015.000      
+3.student.2       .        1.000     1.000  1015.000      
+3.student.3       .        1.000     1.000  1015.000      
+3.student.4       .        1.000     1.000  1015.000      
+3.student.5       .        1.000     1.000  1015.000      
+3.student.6       .        1.000     1.000  1015.000      
+3.student.7       .        1.000     1.000  1015.000      
+3.student.8       .        1.000     1.000  1015.000      
+3.student.9       .        1.000     1.000  1015.000      
+3.student.10      .        1.000     1.000  1015.000      
+3.student.11      .        1.000     1.000  1015.000      
+3.student.12      .        1.000     1.000  1015.000      
+
+---- VAR CAP  
+
+            LOWER     LEVEL     UPPER    MARGINAL
+
+1.small       .         .        1.000 -1.842E+5      
+1.medium      .         .        1.000 -2.865E+5      
+1.large       .        1.000     1.000 -3.867E+5      
+2.small       .         .        1.000 -8.584E+4      
+2.medium      .         .        1.000 -1.283E+5      
+2.large       .        1.000     1.000 -1.677E+5      
+3.small       .         .        1.000 -1.992E+5      
+3.medium      .         .        1.000 -3.026E+5      
+3.large       .        1.000     1.000 -3.909E+5      
+
+---- VAR TOU  
+
+            LOWER     LEVEL     UPPER    MARGINAL
+
+1.small       .        1.000     1.000 2.8478E+5      
+1.medium      .         .        1.000 3.3656E+5      
+1.large       .         .        1.000 4.6598E+5      
+2.small       .         .        1.000 -4.208E+5      
+2.medium      .         .        1.000 -5.009E+5      
+2.large       .         .        1.000 -5.811E+5      
+3.small       .        1.000     1.000 4.1421E+5      
+3.medium      .         .        1.000 4.4009E+5      
+3.large       .         .        1.000 4.6598E+5      
+
+---- VAR Q  
+
+                LOWER     LEVEL     UPPER    MARGINAL
+
+1.main   .1       .         .        +INF     11.000      
+1.main   .2       .         .        +INF     11.000      
+1.main   .3       .         .        +INF     11.000      
+1.main   .4       .         .        +INF     11.000      
+1.main   .5       .         .        +INF     11.000      
+1.main   .6       .         .        +INF     11.000      
+1.main   .7       .         .        +INF     11.000      
+1.main   .8       .         .        +INF     11.000      
+1.main   .9       .         .        +INF     11.000      
+1.main   .10      .         .        +INF     11.000      
+1.main   .11      .         .        +INF     11.000      
+1.main   .12      .         .        +INF     11.000      
+1.lux    .1       .      532.000     +INF       .         
+1.lux    .2       .      488.000     +INF       .         
+1.lux    .3       .      466.000     +INF       .         
+1.lux    .4       .      444.000     +INF       .         
+1.lux    .5       .      554.000     +INF       .         
+1.lux    .6       .      510.000     +INF       .         
+1.lux    .7       .      400.000     +INF       .         
+1.lux    .8       .      378.000     +INF       .         
+1.lux    .9       .      356.000     +INF       .         
+1.lux    .10      .      466.000     +INF       .         
+1.lux    .11      .      444.000     +INF       .         
+1.lux    .12      .      312.000     +INF       .         
+1.student.1       .      670.000     +INF       .         
+1.student.2       .      780.000     +INF       .         
+1.student.3       .      835.000     +INF       .         
+1.student.4       .      890.000     +INF       .         
+1.student.5       .      615.000     +INF       .         
+1.student.6       .      725.000     +INF       .         
+1.student.7       .     1000.000     +INF       .         
+1.student.8       .     1055.000     +INF       .         
+1.student.9       .     1110.000     +INF       .         
+1.student.10      .      835.000     +INF       .         
+1.student.11      .      890.000     +INF       .         
+1.student.12      .     1220.000     +INF       .         
+2.main   .1       .       90.000     +INF       .         
+2.main   .2       .       90.000     +INF       .         
+2.main   .3       .       90.000     +INF       .         
+2.main   .4       .       90.000     +INF       .         
+2.main   .5       .       90.000     +INF       .         
+2.main   .6       .       90.000     +INF       .         
+2.main   .7       .       90.000     +INF       .         
+2.main   .8       .       90.000     +INF       .         
+2.main   .9       .       90.000     +INF       .         
+2.main   .10      .       90.000     +INF       .         
+2.main   .11      .       90.000     +INF       .         
+2.main   .12      .       90.000     +INF       .         
+2.lux    .1       .      387.000     +INF       .         
+2.lux    .2       .      387.000     +INF       .         
+2.lux    .3       .      387.000     +INF       .         
+2.lux    .4       .      387.000     +INF       .         
+2.lux    .5       .      387.000     +INF       .         
+2.lux    .6       .      387.000     +INF       .         
+2.lux    .7       .      387.000     +INF       .         
+2.lux    .8       .      387.000     +INF       .         
+2.lux    .9       .      387.000     +INF       .         
+2.lux    .10      .      387.000     +INF       .         
+2.lux    .11      .      387.000     +INF       .         
+2.lux    .12      .      387.000     +INF       .         
+2.student.1       .       85.000     +INF       .         
+2.student.2       .       85.000     +INF       .         
+2.student.3       .       85.000     +INF       .         
+2.student.4       .       85.000     +INF       .         
+2.student.5       .       85.000     +INF       .         
+2.student.6       .       85.000     +INF       .         
+2.student.7       .       85.000     +INF       .         
+2.student.8       .       85.000     +INF       .         
+2.student.9       .       85.000     +INF       .         
+2.student.10      .       85.000     +INF       .         
+2.student.11      .       85.000     +INF       .         
+2.student.12      .       85.000     +INF       .         
+3.main   .1       .         .        +INF       .         
+3.main   .2       .         .        +INF       .         
+3.main   .3       .         .        +INF       .         
+3.main   .4       .         .        +INF       .         
+3.main   .5       .         .        +INF       .         
+3.main   .6       .         .        +INF       .         
+3.main   .7       .         .        +INF       .         
+3.main   .8       .         .        +INF       .         
+3.main   .9       .         .        +INF       .         
+3.main   .10      .         .        +INF       .         
+3.main   .11      .         .        +INF       .         
+3.main   .12      .         .        +INF       .         
+3.lux    .1       .      442.000     +INF       .         
+3.lux    .2       .      378.000     +INF       .         
+3.lux    .3       .      346.000     +INF       .         
+3.lux    .4       .      314.000     +INF       .         
+3.lux    .5       .      474.000     +INF       .         
+3.lux    .6       .      410.000     +INF       .         
+3.lux    .7       .      250.000     +INF       .         
+3.lux    .8       .      218.000     +INF       .         
+3.lux    .9       .      186.000     +INF       .         
+3.lux    .10      .      346.000     +INF       .         
+3.lux    .11      .      314.000     +INF       .         
+3.lux    .12      .      122.000     +INF       .         
+3.student.1       .      895.000     +INF       .         
+3.student.2       .     1055.000     +INF       .         
+3.student.3       .     1135.000     +INF       .         
+3.student.4       .     1215.000     +INF       .         
+3.student.5       .      815.000     +INF       .         
+3.student.6       .      975.000     +INF       .         
+3.student.7       .     1375.000     +INF       .         
+3.student.8       .     1455.000     +INF       .         
+3.student.9       .     1535.000     +INF       .         
+3.student.10      .     1135.000     +INF       .         
+3.student.11      .     1215.000     +INF       .         
+3.student.12      .     1695.000     +INF       .         
+
+---- VAR SA  
+
+                LOWER     LEVEL     UPPER    MARGINAL
+
+1.main   .1       .         .        +INF       .         
+1.main   .2       .         .        +INF       .         
+1.main   .3       .         .        +INF       .         
+1.main   .4       .         .        +INF       .         
+1.main   .5       .         .        +INF       .         
+1.main   .6       .         .        +INF       .         
+1.main   .7       .         .        +INF       .         
+1.main   .8       .         .        +INF       .         
+1.main   .9       .         .        +INF       .         
+1.main   .10      .         .        +INF       .         
+1.main   .11      .         .        +INF       .         
+1.main   .12      .         .        +INF       .         
+1.lux    .1       .      532.000     +INF       .         
+1.lux    .2       .      488.000     +INF       .         
+1.lux    .3       .      466.000     +INF       .         
+1.lux    .4       .      444.000     +INF       .         
+1.lux    .5       .      554.000     +INF       .         
+1.lux    .6       .      510.000     +INF       .         
+1.lux    .7       .      400.000     +INF       .         
+1.lux    .8       .      378.000     +INF       .         
+1.lux    .9       .      356.000     +INF       .         
+1.lux    .10      .      466.000     +INF       .         
+1.lux    .11      .      444.000     +INF       .         
+1.lux    .12      .      312.000     +INF       .         
+1.student.1       .      670.000     +INF       .         
+1.student.2       .      780.000     +INF       .         
+1.student.3       .      835.000     +INF       .         
+1.student.4       .      890.000     +INF       .         
+1.student.5       .      615.000     +INF       .         
+1.student.6       .      725.000     +INF       .         
+1.student.7       .     1000.000     +INF       .         
+1.student.8       .     1055.000     +INF       .         
+1.student.9       .     1110.000     +INF       .         
+1.student.10      .      835.000     +INF       .         
+1.student.11      .      890.000     +INF       .         
+1.student.12      .     1220.000     +INF       .         
+2.main   .1       .       90.000     +INF       .         
+2.main   .2       .       90.000     +INF       .         
+2.main   .3       .       90.000     +INF       .         
+2.main   .4       .       90.000     +INF       .         
+2.main   .5       .       90.000     +INF       .         
+2.main   .6       .       90.000     +INF       .         
+2.main   .7       .       90.000     +INF       .         
+2.main   .8       .       90.000     +INF       .         
+2.main   .9       .       90.000     +INF       .         
+2.main   .10      .       90.000     +INF       .         
+2.main   .11      .       90.000     +INF       .         
+2.main   .12      .       90.000     +INF       .         
+2.lux    .1       .       80.000     +INF       .         
+2.lux    .2       .       80.000     +INF       .         
+2.lux    .3       .       80.000     +INF       .         
+2.lux    .4       .       80.000     +INF       .         
+2.lux    .5       .       80.000     +INF       .         
+2.lux    .6       .       80.000     +INF       .         
+2.lux    .7       .       80.000     +INF       .         
+2.lux    .8       .       80.000     +INF       .         
+2.lux    .9       .       80.000     +INF       .         
+2.lux    .10      .       80.000     +INF       .         
+2.lux    .11      .       80.000     +INF       .         
+2.lux    .12      .       80.000     +INF       .         
+2.student.1       .       85.000     +INF       .         
+2.student.2       .       85.000     +INF       .         
+2.student.3       .       85.000     +INF       .         
+2.student.4       .       85.000     +INF       .         
+2.student.5       .       85.000     +INF       .         
+2.student.6       .       85.000     +INF       .         
+2.student.7       .       85.000     +INF       .         
+2.student.8       .       85.000     +INF       .         
+2.student.9       .       85.000     +INF       .         
+2.student.10      .       85.000     +INF       .         
+2.student.11      .       85.000     +INF       .         
+2.student.12      .       85.000     +INF       .         
+3.main   .1       .         .        +INF     19.000      
+3.main   .2       .         .        +INF     19.000      
+3.main   .3       .         .        +INF     19.000      
+3.main   .4       .         .        +INF     19.000      
+3.main   .5       .         .        +INF     19.000      
+3.main   .6       .         .        +INF     19.000      
+3.main   .7       .         .        +INF     19.000      
+3.main   .8       .         .        +INF     19.000      
+3.main   .9       .         .        +INF     19.000      
+3.main   .10      .         .        +INF     19.000      
+3.main   .11      .         .        +INF     19.000      
+3.main   .12      .         .        +INF     19.000      
+3.lux    .1       .      749.000     +INF       .         
+3.lux    .2       .      685.000     +INF       .         
+3.lux    .3       .      653.000     +INF       .         
+3.lux    .4       .      621.000     +INF       .         
+3.lux    .5       .      781.000     +INF       .         
+3.lux    .6       .      717.000     +INF       .         
+3.lux    .7       .      557.000     +INF       .         
+3.lux    .8       .      525.000     +INF       .         
+3.lux    .9       .      493.000     +INF       .         
+3.lux    .10      .      653.000     +INF       .         
+3.lux    .11      .      621.000     +INF       .         
+3.lux    .12      .      429.000     +INF       .         
+3.student.1       .      895.000     +INF       .         
+3.student.2       .     1055.000     +INF       .         
+3.student.3       .     1135.000     +INF       .         
+3.student.4       .     1215.000     +INF       .         
+3.student.5       .      815.000     +INF       .         
+3.student.6       .      975.000     +INF       .         
+3.student.7       .     1375.000     +INF       .         
+3.student.8       .     1455.000     +INF       .         
+3.student.9       .     1535.000     +INF       .         
+3.student.10      .     1135.000     +INF       .         
+3.student.11      .     1215.000     +INF       .         
+3.student.12      .     1695.000     +INF       .         
+
+---- VAR IN  
+
+                LOWER     LEVEL     UPPER    MARGINAL
+
+1.main   .1       .         .        +INF     69.000      
+1.main   .2       .         .        +INF     69.000      
+1.main   .3       .         .        +INF     69.000      
+1.main   .4       .         .        +INF     69.000      
+1.main   .5       .         .        +INF     69.000      
+1.main   .6       .         .        +INF     69.000      
+1.main   .7       .         .        +INF     69.000      
+1.main   .8       .         .        +INF     69.000      
+1.main   .9       .         .        +INF     69.000      
+1.main   .10      .         .        +INF     69.000      
+1.main   .11      .         .        +INF     69.000      
+1.main   .12      .         .        +INF     69.000      
+1.lux    .1       .         .        +INF     90.000      
+1.lux    .2       .         .        +INF     90.000      
+1.lux    .3       .         .        +INF     90.000      
+1.lux    .4       .         .        +INF     90.000      
+1.lux    .5       .         .        +INF     90.000      
+1.lux    .6       .         .        +INF     90.000      
+1.lux    .7       .         .        +INF     90.000      
+1.lux    .8       .         .        +INF     90.000      
+1.lux    .9       .         .        +INF     90.000      
+1.lux    .10      .         .        +INF     90.000      
+1.lux    .11      .         .        +INF     90.000      
+1.lux    .12      .         .        +INF     90.000      
+1.student.1       .         .        +INF     55.000      
+1.student.2       .         .        +INF     55.000      
+1.student.3       .         .        +INF     55.000      
+1.student.4       .         .        +INF     55.000      
+1.student.5       .         .        +INF     55.000      
+1.student.6       .         .        +INF     55.000      
+1.student.7       .         .        +INF     55.000      
+1.student.8       .         .        +INF     55.000      
+1.student.9       .         .        +INF     55.000      
+1.student.10      .         .        +INF     55.000      
+1.student.11      .         .        +INF     55.000      
+1.student.12      .         .        +INF     55.000      
+2.main   .1       .         .        +INF       .         
+2.main   .2       .         .        +INF       .         
+2.main   .3       .         .        +INF       .         
+2.main   .4       .         .        +INF       .         
+2.main   .5       .         .        +INF       .         
+2.main   .6       .         .        +INF       .         
+2.main   .7       .         .        +INF       .         
+2.main   .8       .         .        +INF       .         
+2.main   .9       .         .        +INF       .         
+2.main   .10      .         .        +INF       .         
+2.main   .11      .         .        +INF       .         
+2.main   .12      .         .        +INF       .         
+2.lux    .1       .      307.000     +INF       .         
+2.lux    .2       .      307.000     +INF       .         
+2.lux    .3       .      307.000     +INF       .         
+2.lux    .4       .      307.000     +INF       .         
+2.lux    .5       .      307.000     +INF       .         
+2.lux    .6       .      307.000     +INF       .         
+2.lux    .7       .      307.000     +INF       .         
+2.lux    .8       .      307.000     +INF       .         
+2.lux    .9       .      307.000     +INF       .         
+2.lux    .10      .      307.000     +INF       .         
+2.lux    .11      .      307.000     +INF       .         
+2.lux    .12      .      307.000     +INF       .         
+2.student.1       .         .        +INF     19.000      
+2.student.2       .         .        +INF     19.000      
+2.student.3       .         .        +INF     19.000      
+2.student.4       .         .        +INF     19.000      
+2.student.5       .         .        +INF     19.000      
+2.student.6       .         .        +INF     19.000      
+2.student.7       .         .        +INF     19.000      
+2.student.8       .         .        +INF     19.000      
+2.student.9       .         .        +INF     19.000      
+2.student.10      .         .        +INF     19.000      
+2.student.11      .         .        +INF     19.000      
+2.student.12      .         .        +INF     19.000      
+3.main   .1       .         .        +INF    105.000      
+3.main   .2       .         .        +INF    105.000      
+3.main   .3       .         .        +INF    105.000      
+3.main   .4       .         .        +INF    105.000      
+3.main   .5       .         .        +INF    105.000      
+3.main   .6       .         .        +INF    105.000      
+3.main   .7       .         .        +INF    105.000      
+3.main   .8       .         .        +INF    105.000      
+3.main   .9       .         .        +INF    105.000      
+3.main   .10      .         .        +INF    105.000      
+3.main   .11      .         .        +INF    105.000      
+3.main   .12      .         .        +INF    105.000      
+3.lux    .1       .         .        +INF    120.000      
+3.lux    .2       .         .        +INF    120.000      
+3.lux    .3       .         .        +INF    120.000      
+3.lux    .4       .         .        +INF    120.000      
+3.lux    .5       .         .        +INF    120.000      
+3.lux    .6       .         .        +INF    120.000      
+3.lux    .7       .         .        +INF    120.000      
+3.lux    .8       .         .        +INF    120.000      
+3.lux    .9       .         .        +INF    120.000      
+3.lux    .10      .         .        +INF    120.000      
+3.lux    .11      .         .        +INF    120.000      
+3.lux    .12      .         .        +INF    120.000      
+3.student.1       .         .        +INF     67.000      
+3.student.2       .         .        +INF     67.000      
+3.student.3       .         .        +INF     67.000      
+3.student.4       .         .        +INF     67.000      
+3.student.5       .         .        +INF     67.000      
+3.student.6       .         .        +INF     67.000      
+3.student.7       .         .        +INF     67.000      
+3.student.8       .         .        +INF     67.000      
+3.student.9       .         .        +INF     67.000      
+3.student.10      .         .        +INF     67.000      
+3.student.11      .         .        +INF     67.000      
+3.student.12      .         .        +INF     67.000      
+
+---- VAR SH  
+
+                LOWER     LEVEL     UPPER    MARGINAL
+
+1.main   .1       .      690.000     +INF       .         
+1.main   .2       .      800.000     +INF       .         
+1.main   .3       .      855.000     +INF       .         
+1.main   .4       .      910.000     +INF       .         
+1.main   .5       .      635.000     +INF       .         
+1.main   .6       .      745.000     +INF       .         
+1.main   .7       .     1020.000     +INF       .         
+1.main   .8       .     1075.000     +INF       .         
+1.main   .9       .     1130.000     +INF       .         
+1.main   .10      .      855.000     +INF       .         
+1.main   .11      .      910.000     +INF       .         
+1.main   .12      .     1240.000     +INF       .         
+1.lux    .1       .      128.000     +INF       .         
+1.lux    .2       .      282.000     +INF       .         
+1.lux    .3       .      359.000     +INF       .         
+1.lux    .4       .      436.000     +INF       .         
+1.lux    .5       .       51.000     +INF       .         
+1.lux    .6       .      205.000     +INF       .         
+1.lux    .7       .      590.000     +INF       .         
+1.lux    .8       .      667.000     +INF       .         
+1.lux    .9       .      744.000     +INF       .         
+1.lux    .10      .      359.000     +INF       .         
+1.lux    .11      .      436.000     +INF       .         
+1.lux    .12      .      898.000     +INF       .         
+1.student.1       .         .        +INF     24.000      
+1.student.2       .         .        +INF     24.000      
+1.student.3       .         .        +INF     24.000      
+1.student.4       .         .        +INF     24.000      
+1.student.5       .         .        +INF     24.000      
+1.student.6       .         .        +INF     24.000      
+1.student.7       .         .        +INF     24.000      
+1.student.8       .         .        +INF     24.000      
+1.student.9       .         .        +INF     24.000      
+1.student.10      .         .        +INF     24.000      
+1.student.11      .         .        +INF     24.000      
+1.student.12      .         .        +INF     24.000      
+2.main   .1       .         .        +INF     13.000      
+2.main   .2       .         .        +INF     13.000      
+2.main   .3       .         .        +INF     13.000      
+2.main   .4       .         .        +INF     13.000      
+2.main   .5       .         .        +INF     13.000      
+2.main   .6       .         .        +INF     13.000      
+2.main   .7       .         .        +INF     13.000      
+2.main   .8       .         .        +INF     13.000      
+2.main   .9       .         .        +INF     13.000      
+2.main   .10      .         .        +INF     13.000      
+2.main   .11      .         .        +INF     13.000      
+2.main   .12      .         .        +INF     13.000      
+2.lux    .1       .         .        +INF     30.000      
+2.lux    .2       .         .        +INF     30.000      
+2.lux    .3       .         .        +INF     30.000      
+2.lux    .4       .         .        +INF     30.000      
+2.lux    .5       .         .        +INF     30.000      
+2.lux    .6       .         .        +INF     30.000      
+2.lux    .7       .         .        +INF     30.000      
+2.lux    .8       .         .        +INF     30.000      
+2.lux    .9       .         .        +INF     30.000      
+2.lux    .10      .         .        +INF     30.000      
+2.lux    .11      .         .        +INF     30.000      
+2.lux    .12      .         .        +INF     30.000      
+2.student.1       .         .        +INF     36.000      
+2.student.2       .         .        +INF     36.000      
+2.student.3       .         .        +INF     36.000      
+2.student.4       .         .        +INF     36.000      
+2.student.5       .         .        +INF     36.000      
+2.student.6       .         .        +INF     36.000      
+2.student.7       .         .        +INF     36.000      
+2.student.8       .         .        +INF     36.000      
+2.student.9       .         .        +INF     36.000      
+2.student.10      .         .        +INF     36.000      
+2.student.11      .         .        +INF     36.000      
+2.student.12      .         .        +INF     36.000      
+3.main   .1       .      905.000     +INF       .         
+3.main   .2       .     1065.000     +INF       .         
+3.main   .3       .     1145.000     +INF       .         
+3.main   .4       .     1225.000     +INF       .         
+3.main   .5       .      825.000     +INF       .         
+3.main   .6       .      985.000     +INF       .         
+3.main   .7       .     1385.000     +INF       .         
+3.main   .8       .     1465.000     +INF       .         
+3.main   .9       .     1545.000     +INF       .         
+3.main   .10      .     1145.000     +INF       .         
+3.main   .11      .     1225.000     +INF       .         
+3.main   .12      .     1705.000     +INF       .         
+3.lux    .1       .      171.000     +INF       .         
+3.lux    .2       .      395.000     +INF       .         
+3.lux    .3       .      507.000     +INF       .         
+3.lux    .4       .      619.000     +INF       .         
+3.lux    .5       .       59.000     +INF       .         
+3.lux    .6       .      283.000     +INF       .         
+3.lux    .7       .      843.000     +INF       .         
+3.lux    .8       .      955.000     +INF       .         
+3.lux    .9       .     1067.000     +INF       .         
+3.lux    .10      .      507.000     +INF       .         
+3.lux    .11      .      619.000     +INF       .         
+3.lux    .12      .     1291.000     +INF       .         
+3.student.1       .         .        +INF     24.000      
+3.student.2       .         .        +INF     24.000      
+3.student.3       .         .        +INF     24.000      
+3.student.4       .         .        +INF     24.000      
+3.student.5       .         .        +INF     24.000      
+3.student.6       .         .        +INF     24.000      
+3.student.7       .         .        +INF     24.000      
+3.student.8       .         .        +INF     24.000      
+3.student.9       .         .        +INF     24.000      
+3.student.10      .         .        +INF     24.000      
+3.student.11      .         .        +INF     24.000      
+3.student.12      .         .        +INF     24.000      
+
+                       LOWER     LEVEL     UPPER    MARGINAL
+
+---- VAR z              -INF  -1.606E+5     +INF       .         
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 24.1.2  r40979 Released Jun 16, 2013 WEX-WEI x86_64/MS Windows 01/10/18 17:57:26 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     72 VARIABLE z.L                   =  -160635.000  
+
+----     72 VARIABLE CH.L  
+
+1 1.000,    2 1.000,    3 1.000
+
+
+----     72 VARIABLE IN.L  
+
+                    1           2           3           4           5
+
+2.lux         307.000     307.000     307.000     307.000     307.000
+
+        +           6           7           8           9          10
+
+2.lux         307.000     307.000     307.000     307.000     307.000
+
+        +          11          12
+
+2.lux         307.000     307.000
+
+
+----     72 VARIABLE Q.L  
+
+                    1           2           3           4           5
+
+1.lux         532.000     488.000     466.000     444.000     554.000
+1.student     670.000     780.000     835.000     890.000     615.000
+2.main         90.000      90.000      90.000      90.000      90.000
+2.lux         387.000     387.000     387.000     387.000     387.000
+2.student      85.000      85.000      85.000      85.000      85.000
+3.lux         442.000     378.000     346.000     314.000     474.000
+3.student     895.000    1055.000    1135.000    1215.000     815.000
+
+        +           6           7           8           9          10
+
+1.lux         510.000     400.000     378.000     356.000     466.000
+1.student     725.000    1000.000    1055.000    1110.000     835.000
+2.main         90.000      90.000      90.000      90.000      90.000
+2.lux         387.000     387.000     387.000     387.000     387.000
+2.student      85.000      85.000      85.000      85.000      85.000
+3.lux         410.000     250.000     218.000     186.000     346.000
+3.student     975.000    1375.000    1455.000    1535.000    1135.000
+
+        +          11          12
+
+1.lux         444.000     312.000
+1.student     890.000    1220.000
+2.main         90.000      90.000
+2.lux         387.000     387.000
+2.student      85.000      85.000
+3.lux         314.000     122.000
+3.student    1215.000    1695.000
+
+
+----     72 VARIABLE SH.L  
+
+                    1           2           3           4           5
+
+1.main        690.000     800.000     855.000     910.000     635.000
+1.lux         128.000     282.000     359.000     436.000      51.000
+3.main        905.000    1065.000    1145.000    1225.000     825.000
+3.lux         171.000     395.000     507.000     619.000      59.000
+
+        +           6           7           8           9          10
+
+1.main        745.000    1020.000    1075.000    1130.000     855.000
+1.lux         205.000     590.000     667.000     744.000     359.000
+3.main        985.000    1385.000    1465.000    1545.000    1145.000
+3.lux         283.000     843.000     955.000    1067.000     507.000
+
+        +          11          12
+
+1.main        910.000    1240.000
+1.lux         436.000     898.000
+3.main       1225.000    1705.000
+3.lux         619.000    1291.000
+
+
+----     72 VARIABLE SA.L  
+
+                    1           2           3           4           5
+
+1.lux         532.000     488.000     466.000     444.000     554.000
+1.student     670.000     780.000     835.000     890.000     615.000
+2.main         90.000      90.000      90.000      90.000      90.000
+2.lux          80.000      80.000      80.000      80.000      80.000
+2.student      85.000      85.000      85.000      85.000      85.000
+3.lux         749.000     685.000     653.000     621.000     781.000
+3.student     895.000    1055.000    1135.000    1215.000     815.000
+
+        +           6           7           8           9          10
+
+1.lux         510.000     400.000     378.000     356.000     466.000
+1.student     725.000    1000.000    1055.000    1110.000     835.000
+2.main         90.000      90.000      90.000      90.000      90.000
+2.lux          80.000      80.000      80.000      80.000      80.000
+2.student      85.000      85.000      85.000      85.000      85.000
+3.lux         717.000     557.000     525.000     493.000     653.000
+3.student     975.000    1375.000    1455.000    1535.000    1135.000
+
+        +          11          12
+
+1.lux         444.000     312.000
+1.student     890.000    1220.000
+2.main         90.000      90.000
+2.lux          80.000      80.000
+2.student      85.000      85.000
+3.lux         621.000     429.000
+3.student    1215.000    1695.000
+
+
+----     72 VARIABLE TOU.L  
+
+        small
+
+1       1.000
+3       1.000
+
+
+----     72 VARIABLE IO.L  
+
+                    1           2           3           4           5
+
+1.lux           1.000       1.000       1.000       1.000       1.000
+1.student       1.000       1.000       1.000       1.000       1.000
+2.main          1.000       1.000       1.000       1.000       1.000
+2.lux           1.000       1.000       1.000       1.000       1.000
+2.student       1.000       1.000       1.000       1.000       1.000
+3.lux           1.000       1.000       1.000       1.000       1.000
+3.student       1.000       1.000       1.000       1.000       1.000
+
+        +           6           7           8           9          10
+
+1.lux           1.000       1.000       1.000       1.000       1.000
+1.student       1.000       1.000       1.000       1.000       1.000
+2.main          1.000       1.000       1.000       1.000       1.000
+2.lux           1.000       1.000       1.000       1.000       1.000
+2.student       1.000       1.000       1.000       1.000       1.000
+3.lux           1.000       1.000       1.000       1.000       1.000
+3.student       1.000       1.000       1.000       1.000       1.000
+
+        +          11          12
+
+1.lux           1.000       1.000
+1.student       1.000       1.000
+2.main          1.000       1.000
+2.lux           1.000       1.000
+2.student       1.000       1.000
+3.lux           1.000       1.000
+3.student       1.000       1.000
+
+
+----     72 VARIABLE CAP.L  
+
+        large
+
+1       1.000
+2       1.000
+3       1.000
+
+
+
+EXECUTION TIME       =        0.000 SECONDS      3 MB  24.1.2 r40979 WEX-WEI
+
+
+USER: Gary Goldstein                                 G010614:2121CA-WIN
+      Decision Ware, Inc.                                        DC2807
+
+
+**** FILE SUMMARY
+
+Input      E:\My_software_develops\Lava flow\java_lava_flow\Mathematical model\m
+           odel.gms
+Output     C:\Users\Amir72c\Documents\gamsdir\projdir\model.lst
