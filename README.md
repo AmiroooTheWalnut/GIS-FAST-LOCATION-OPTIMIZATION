@@ -8,3 +8,5 @@ In order to test the application, you can open the processed kryo file or prepro
 ![alt text](https://github.com/AmiroooTheWalnut/GIS-FAST-LOCATION-OPTIMIZATION/blob/master/Picture4.png?raw=true)
 ![alt text](https://github.com/AmiroooTheWalnut/GIS-FAST-LOCATION-OPTIMIZATION/blob/master/Picture5.png?raw=true)
 ![alt text](https://github.com/AmiroooTheWalnut/GIS-FAST-LOCATION-OPTIMIZATION/blob/master/Picture6.png?raw=true)
+![alt text](https://github.com/AmiroooTheWalnut/GIS-FAST-LOCATION-OPTIMIZATION/blob/master/LocationGIS2.PNG?raw=true)
+![alt text](https://github.com/AmiroooTheWalnut/GIS-FAST-LOCATION-OPTIMIZATION/blob/master/LocationGIS.PNG?raw=true)
