@@ -603,7 +603,7 @@ public class NumericController extends javax.swing.JDialog {
         if (isEdit == true) {
             NumericLayer temp = new NumericLayer(jTextField1.getText());
             int size = validFacilityList.size();
-            temp.locationIds = new String[size];
+            temp.locationIds = new long[size];
             temp.locationNodes = new LocationNode[size];
             temp.capacities = new double[size];
             temp.maxColor = jPanel1.getBackground();
@@ -658,7 +658,7 @@ public class NumericController extends javax.swing.JDialog {
         } else {
             NumericLayer temp = new NumericLayer(jTextField1.getText());
             int size = validFacilityList.size();
-            temp.locationIds = new String[size];
+            temp.locationIds = new long[size];
             temp.locationNodes = new LocationNode[size];
             temp.capacities = new double[size];
             temp.maxColor = jPanel1.getBackground();
@@ -750,7 +750,7 @@ public class NumericController extends javax.swing.JDialog {
     }
 
     public void fillPassedData() {
-        ((FacilityLocationDefinition) locationDefinitions.get(passedOrder)).IDText.setText(passedNode.id);
+        ((FacilityLocationDefinition) locationDefinitions.get(passedOrder)).IDText.setText(String.valueOf(passedNode.id));
         passedNode = null;
         passedOrder = -1;
     }
@@ -762,7 +762,7 @@ public class NumericController extends javax.swing.JDialog {
             String temp = ((FacilityLocationDefinition) locationDefinitions.get(i)).IDText.getText();
             boolean isBroken = false;
             for (int j = 0; j < myParent.allData.all_Nodes.length; j++) {
-                if (myParent.allData.all_Nodes[j].id.equals(temp)) {
+                if (String.valueOf(myParent.allData.all_Nodes[j].id).equals(temp)) {
                     isBroken = true;
                     ((FacilityLocationDefinition) locationDefinitions.get(i)).myNode = myParent.allData.all_Nodes[j];
                     final int passedI = i;

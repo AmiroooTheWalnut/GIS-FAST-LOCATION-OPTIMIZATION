@@ -1,6 +1,7 @@
 package GIS3D;
 
 import GUI.main_frame;
+import Simulation.FacilityLocation;
 import Simulation.Lava_parallel;
 import Simulation.NeighborNode;
 import Simulation.Routing;
@@ -52,6 +53,8 @@ public class Viewing extends SimpleApplication {
     LocationNode startNode = null;
     LocationNode endNode = null;
     BitmapText valueText[];
+
+    public boolean isBatchRendering = true;
 
     public Viewing(main_frame parent) {
         mainFParent = parent;
@@ -155,7 +158,7 @@ public class Viewing extends SimpleApplication {
                                     trafficLayerIndex = i;
                                 }
                             }
-                            mainFParent.allData.setParallelLayers(1,-1);
+                            mainFParent.allData.setParallelLayers(1, -1);
                             mainFParent.routing = new Routing(mainFParent, mainFParent.allData, trafficLayerIndex, 0);
                             mainFParent.routing.findPath(startNode, endNode);
                             //System.out.println(mainFParent.routing.pathDistance);
@@ -176,7 +179,7 @@ public class Viewing extends SimpleApplication {
                                     ((NeighborNode) mainFParent.routing.path.get(i)).myNode.myWays[j].color[index * 3 + 0] = 1;
                                     ((NeighborNode) mainFParent.routing.path.get(i)).myNode.myWays[j].color[index * 3 + 1] = 1f;
                                     ((NeighborNode) mainFParent.routing.path.get(i)).myNode.myWays[j].color[index * 3 + 2] = 1;
-                                }                             
+                                }
                             }
                             startNode = null;
                             endNode = null;
@@ -204,82 +207,123 @@ public class Viewing extends SimpleApplication {
     };
 
     public void plotLine() {
-//        renderer.cleanup();
-        rootNode.detachChildNamed("line");
-        
-        Geometry bachedGeom;
-        ArrayList<Vector3f> allVerticesArrayList = new ArrayList();
-        ArrayList indicesArrayList = new ArrayList();
-        ArrayList colorsArrayList = new ArrayList();
+        //renderer.cleanup();
+        //rootNode.detachChildNamed("line");
+        int isDeleted = 1;
+        while (isDeleted > -1) {
+            isDeleted = rootNode.detachChildNamed("line");
+        }
 
-        int counter = 0;
-        for (int i = 0; i < mainFParent.allData.all_Ways.length; i++) {
-            allVerticesArrayList.add(new Vector3f(0, 0, -20));
-            colorsArrayList.add(0f);
-            colorsArrayList.add(0f);
-            colorsArrayList.add(0f);
-            indicesArrayList.add(counter);
-            indicesArrayList.add(counter + 1);
-            counter = counter + 1;
-
-            allVerticesArrayList.add(new Vector3f(mainFParent.allData.all_Ways[i].myNodes[0].renderingLocation.x,mainFParent.allData.all_Ways[i].myNodes[0].renderingLocation.y,mainFParent.allData.all_Ways[i].myNodes[0].renderingLocation.z-0.5f));
-            colorsArrayList.add(0f);
-            colorsArrayList.add(0f);
-            colorsArrayList.add(0f);
-            indicesArrayList.add(counter);
-            indicesArrayList.add(counter + 1);
-            counter = counter + 1;
-            for (int j = 0; j < mainFParent.allData.all_Ways[i].myNodes.length; j++) {
-                allVerticesArrayList.add(mainFParent.allData.all_Ways[i].myNodes[j].renderingLocation);
-                colorsArrayList.add(mainFParent.allData.all_Ways[i].color[0]);
-                colorsArrayList.add(mainFParent.allData.all_Ways[i].color[1]);
-                colorsArrayList.add(mainFParent.allData.all_Ways[i].color[2]);
+        if (isBatchRendering == false) {
+            Mesh[] all_meshes = new Mesh[mainFParent.allData.all_Ways.length];
+            Geometry all_geo[] = new Geometry[mainFParent.allData.all_Ways.length];
+            int[][] indexes = new int[mainFParent.allData.all_Ways.length][];
+            for (int i = 0; i < all_meshes.length; i++) {
+                indexes[i] = new int[mainFParent.allData.all_Ways[i].myNodes.length * 2];
+                for (int j = 0; j < mainFParent.allData.all_Ways[i].myNodes.length - 1; j++) {
+                    indexes[i][2 * j] = (j);
+                    indexes[i][2 * j + 1] = (j + 1);
+                }
+                all_meshes[i] = new Mesh();
+                all_meshes[i].setMode(Mesh.Mode.Lines);
+                all_meshes[i].setBuffer(VertexBuffer.Type.Position, 3, BufferUtils.createFloatBuffer(mainFParent.allData.all_Ways[i].lines));
+                all_meshes[i].setBuffer(VertexBuffer.Type.Index, 2, indexes[i]);
+                all_meshes[i].updateBound();
+                all_meshes[i].updateCounts();
+                all_geo[i] = new Geometry("line", all_meshes[i]);
+                Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                mat.setBoolean("VertexColor", true);
+                all_meshes[i].setBuffer(VertexBuffer.Type.Color, 3, mainFParent.allData.all_Ways[i].color);
+                all_geo[i].setMaterial(mat);
+                rootNode.attachChild(all_geo[i]);
             }
-            for (int j = 0; j < mainFParent.allData.all_Ways[i].myNodes.length - 1; j++) {
+        } else {
+            Geometry bachedGeom;
+            ArrayList<Vector3f> allVerticesArrayList = new ArrayList();
+            ArrayList indicesArrayList = new ArrayList();
+            ArrayList colorsArrayList = new ArrayList();
+
+            int counter = 0;
+            for (int i = 0; i < mainFParent.allData.all_Ways.length; i++) {
+
+                allVerticesArrayList.add(new Vector3f(0, 0, -20));
+                colorsArrayList.add(0f);
+                colorsArrayList.add(0f);
+                colorsArrayList.add(0f);
+                indicesArrayList.add(counter);
+                indicesArrayList.add(counter + 1);
+                counter = counter + 1;
+
+                try {
+                    allVerticesArrayList.add(new Vector3f(mainFParent.allData.all_Ways[i].myNodes[0].renderingLocation.x, mainFParent.allData.all_Ways[i].myNodes[0].renderingLocation.y, mainFParent.allData.all_Ways[i].myNodes[0].renderingLocation.z - 0.5f));
+                } catch (Exception ex) {
+                    System.out.println("PROBLEM MAKING VERTEX TAIL INWARD!");
+                }
+
+                colorsArrayList.add(0f);
+                colorsArrayList.add(0f);
+                colorsArrayList.add(0f);
+                indicesArrayList.add(counter);
+                indicesArrayList.add(counter + 1);
+                counter = counter + 1;
+
+                for (int j = 0; j < mainFParent.allData.all_Ways[i].myNodes.length; j++) {
+                    allVerticesArrayList.add(mainFParent.allData.all_Ways[i].myNodes[j].renderingLocation);
+                    colorsArrayList.add(mainFParent.allData.all_Ways[i].color[3*j+0]);
+                    colorsArrayList.add(mainFParent.allData.all_Ways[i].color[3*j+1]);
+                    colorsArrayList.add(mainFParent.allData.all_Ways[i].color[3*j+2]);
+                }
+                for (int j = 0; j < mainFParent.allData.all_Ways[i].myNodes.length - 1; j++) {
+                    indicesArrayList.add(counter);
+                    indicesArrayList.add(counter + 1);
+                    counter = counter + 1;
+                }
+                int lastIndex = mainFParent.allData.all_Ways[i].myNodes.length - 1;
+                try {
+                    allVerticesArrayList.add(new Vector3f(mainFParent.allData.all_Ways[i].myNodes[lastIndex].renderingLocation.x, mainFParent.allData.all_Ways[i].myNodes[lastIndex].renderingLocation.y, mainFParent.allData.all_Ways[i].myNodes[lastIndex].renderingLocation.z - 0.5f));
+                } catch (Exception ex) {
+                    System.out.println();
+                }
+
+                colorsArrayList.add(0f);
+                colorsArrayList.add(0f);
+                colorsArrayList.add(0f);
                 indicesArrayList.add(counter);
                 indicesArrayList.add(counter + 1);
                 counter = counter + 1;
             }
-            int lastIndex=mainFParent.allData.all_Ways[i].myNodes.length - 1;
-            allVerticesArrayList.add(new Vector3f(mainFParent.allData.all_Ways[i].myNodes[lastIndex].renderingLocation.x,mainFParent.allData.all_Ways[i].myNodes[lastIndex].renderingLocation.y,mainFParent.allData.all_Ways[i].myNodes[lastIndex].renderingLocation.z-0.5f));
-            colorsArrayList.add(0f);
-            colorsArrayList.add(0f);
-            colorsArrayList.add(0f);
-            indicesArrayList.add(counter);
-            indicesArrayList.add(counter + 1);
-            counter = counter + 1;
+
+            Vector3f vertices[] = new Vector3f[allVerticesArrayList.size()];
+            for (int i = 0; i < allVerticesArrayList.size(); i++) {
+                vertices[i] = allVerticesArrayList.get(i);
+            }
+
+            int indices[] = new int[indicesArrayList.size()];
+            for (int i = 0; i < indicesArrayList.size(); i++) {
+                indices[i] = (int) indicesArrayList.get(i);
+            }
+
+            float colors[] = new float[colorsArrayList.size()];
+            for (int i = 0; i < colorsArrayList.size(); i++) {
+                colors[i] = (float) colorsArrayList.get(i);
+            }
+
+            Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            mat.setBoolean("VertexColor", true);
+            bachedMesh = new Mesh();
+
+            bachedMesh.setMode(Mesh.Mode.Lines);
+            bachedMesh.setBuffer(VertexBuffer.Type.Position, 3, BufferUtils.createFloatBuffer(vertices));
+
+            bachedMesh.setBuffer(VertexBuffer.Type.Index, 2, indices);
+            bachedMesh.updateBound();
+            bachedMesh.updateCounts();
+            bachedMesh.setBuffer(VertexBuffer.Type.Color, 3, colors);
+            bachedGeom = new Geometry("line", bachedMesh);
+            bachedGeom.setMaterial(mat);
+
+            rootNode.attachChild(bachedGeom);
         }
-
-        Vector3f vertices[] = new Vector3f[allVerticesArrayList.size()];
-        for (int i = 0; i < allVerticesArrayList.size(); i++) {
-            vertices[i] = allVerticesArrayList.get(i);
-        }
-
-        int indices[] = new int[indicesArrayList.size()];
-        for (int i = 0; i < indicesArrayList.size(); i++) {
-            indices[i] = (int) indicesArrayList.get(i);
-        }
-
-        float colors[] = new float[colorsArrayList.size()];
-        for (int i = 0; i < colorsArrayList.size(); i++) {
-            colors[i] = (float) colorsArrayList.get(i);
-        }
-
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setBoolean("VertexColor", true);
-        bachedMesh = new Mesh();
-
-        bachedMesh.setMode(Mesh.Mode.Lines);
-        bachedMesh.setBuffer(VertexBuffer.Type.Position, 3, BufferUtils.createFloatBuffer(vertices));
-
-        bachedMesh.setBuffer(VertexBuffer.Type.Index, 2, indices);
-        bachedMesh.updateBound();
-        bachedMesh.updateCounts();
-        bachedMesh.setBuffer(VertexBuffer.Type.Color, 3, colors);
-        bachedGeom = new Geometry("line", bachedMesh);
-        bachedGeom.setMaterial(mat);
-
-        rootNode.attachChild(bachedGeom);
     }
 
     public void plotGrids() {
@@ -337,9 +381,9 @@ public class Viewing extends SimpleApplication {
                         colorsArrayList.add(0f);
                         colorsArrayList.add(0f);
 
-                        colorsArrayList.add(mainFParent.allData.all_Ways[i].color[0]);
-                        colorsArrayList.add(mainFParent.allData.all_Ways[i].color[1]);
-                        colorsArrayList.add(mainFParent.allData.all_Ways[i].color[2]);
+                        colorsArrayList.add(mainFParent.allData.all_Ways[i].color[3*j+0]);
+                        colorsArrayList.add(mainFParent.allData.all_Ways[i].color[3*j+1]);
+                        colorsArrayList.add(mainFParent.allData.all_Ways[i].color[3*j+2]);
 
                         colorsArrayList.add(0f);
                         colorsArrayList.add(0f);
@@ -350,46 +394,80 @@ public class Viewing extends SimpleApplication {
                 for (int i = 0; i < colorsArrayList.size(); i++) {
                     colors[i] = (float) colorsArrayList.get(i);
                 }
-                
+
                 bachedMesh.setBuffer(VertexBuffer.Type.Color, 3, colors);
                 return null;
             }
         });
     }
 
-    public void refresh_lava() {
+    public void refresh_lava(FacilityLocation testFacilities[], boolean isLavaBased) {
         //System.out.println("number of lava in renderer: "+myParent.lavaBuffer.size());
         int output = rootNode.detachChildNamed("LAVA");
         while (output != -1) {
             output = rootNode.detachChildNamed("LAVA");
         }
 
-        Box[] all_lava_box = new Box[mainFParent.flowControl.lavaBuffer.size()];
-        Geometry[] all_lava_geom = new Geometry[mainFParent.flowControl.lavaBuffer.size()];
-        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat.setColor("Color", ColorRGBA.Red);
-        if (valueText != null) {
-            for (int i = 0; i < valueText.length; i++) {
-                rootNode.detachChild(valueText[i]);
+        if (isLavaBased == true) {//LAVA ON FLOW CONTROL
+            Box[] all_lava_box = new Box[mainFParent.flowControl.lavaBuffer.size()];
+            Geometry[] all_lava_geom = new Geometry[mainFParent.flowControl.lavaBuffer.size()];
+            Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            mat.setColor("Color", ColorRGBA.Red);
+
+//            if (valueText != null) {
+//                for (int i = 0; i < valueText.length; i++) {
+//                    rootNode.detachChild(valueText[i]);
+//                }
+//            }
+//            valueText = new BitmapText[mainFParent.flowControl.lavaBuffer.size()];
+
+            for (int i = 0; i < mainFParent.flowControl.lavaBuffer.size(); i++) {
+                all_lava_box[i] = new Box(0.01f, 0.01f, 0.01f);
+                all_lava_geom[i] = new Geometry("LAVA", all_lava_box[i]);
+                all_lava_geom[i].setMaterial(mat);
+                all_lava_geom[i].setLocalTranslation(((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex]);
+                rootNode.attachChild(all_lava_geom[i]);
+
+
+//                valueText[i] = new BitmapText(guiFont, false);
+//                valueText[i].setSize(0.2f);
+//                valueText[i].setColor(ColorRGBA.Red);
+//                valueText[i].setText(String.valueOf(((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).fuel));
+//                valueText[i].setLocalTranslation(((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].x, ((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].y, ((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].z + 1 + i * 0.4f);
+//                rootNode.attachChild(valueText[i]);
+
+            }
+        } else if(testFacilities!=null) {
+            for (int j = 0; j < testFacilities.length; j++) {
+                Box[] all_lava_box = new Box[testFacilities[j].lavaBuffer.size()];
+                Geometry[] all_lava_geom = new Geometry[testFacilities[j].lavaBuffer.size()];
+                Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+                mat.setColor("Color", new ColorRGBA((float) testFacilities[j].color.getRed() / 255f, (float) testFacilities[j].color.getGreen() / 255f, (float) testFacilities[j].color.getBlue() / 255f, 1f));
+//        if (valueText != null) {
+//            for (int i = 0; i < valueText.length; i++) {
+//                rootNode.detachChild(valueText[i]);
+//            }
+//        }
+//
+//        valueText = new BitmapText[mainFParent.flowControl.lavaBuffer.size()];
+//
+                for (int i = 0; i < testFacilities[j].lavaBuffer.size(); i++) {
+//            valueText[i] = new BitmapText(guiFont, false);
+                    all_lava_box[i] = new Box(0.01f, 0.01f, 0.01f);
+                    all_lava_geom[i] = new Geometry("LAVA", all_lava_box[i]);
+                    all_lava_geom[i].setMaterial(mat);
+                    all_lava_geom[i].setLocalTranslation(((Lava_parallel) testFacilities[j].lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) testFacilities[j].lavaBuffer.get(i)).currentIndex]);
+                    rootNode.attachChild(all_lava_geom[i]);
+//
+//            valueText[i].setSize(0.2f);
+//            valueText[i].setColor(ColorRGBA.Red);
+//            valueText[i].setText(String.valueOf(((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).fuel));
+//            valueText[i].setLocalTranslation(((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].x, ((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].y, ((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].z + 1 + i * 0.4f);
+//            rootNode.attachChild(valueText[i]);
+                }
             }
         }
 
-        valueText = new BitmapText[mainFParent.flowControl.lavaBuffer.size()];
-
-        for (int i = 0; i < mainFParent.flowControl.lavaBuffer.size(); i++) {
-            valueText[i] = new BitmapText(guiFont, false);
-            all_lava_box[i] = new Box(0.1f, 0.1f, 0.1f);
-            all_lava_geom[i] = new Geometry("LAVA", all_lava_box[i]);
-            all_lava_geom[i].setMaterial(mat);
-            all_lava_geom[i].setLocalTranslation(((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex]);
-            rootNode.attachChild(all_lava_geom[i]);
-
-            valueText[i].setSize(0.2f);
-            valueText[i].setColor(ColorRGBA.Red);
-            valueText[i].setText(String.valueOf(((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).fuel));
-            valueText[i].setLocalTranslation(((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].x, ((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].y, ((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentWay.lines[((Lava_parallel) mainFParent.flowControl.lavaBuffer.get(i)).currentIndex].z + 1 + i * 0.4f);
-            rootNode.attachChild(valueText[i]);
-        }
     }
 
     @Override
@@ -415,7 +493,7 @@ public class Viewing extends SimpleApplication {
             plotLine();
             plotGrids();
         }
-        flyCam.setMoveSpeed(20);
+        flyCam.setMoveSpeed(5);
     }
 
     public void showCrosshair() {
@@ -488,7 +566,6 @@ public class Viewing extends SimpleApplication {
         }
     }
 
-
     @Override
     public void simpleUpdate(float tpf) {
         //TODO: add update code
@@ -497,7 +574,7 @@ public class Viewing extends SimpleApplication {
 //            refresh_color();
             plotLine();
             if (isIterateDebug) {
-                refresh_lava();
+//                refresh_lava();
             }
             isRefreshing = false;
         }

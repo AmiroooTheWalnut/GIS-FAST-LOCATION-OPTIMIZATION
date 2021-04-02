@@ -11,6 +11,9 @@ import Simulation.FacilityLocation;
 import com.jme3.system.AppSettings;
 import com.jme3.system.JmeCanvasContext;
 import java.awt.Canvas;
+import java.awt.Color;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.Callable;
 
 /**
@@ -27,6 +30,8 @@ public class SimulatorDebug extends javax.swing.JDialog {
     AppSettings settings;
     Canvas canvas;
     boolean isZoneActive = false;
+    boolean isFacilityBased = false;
+    boolean isLavaBased = false;
 
     /**
      * Creates new form SimulatorDebug
@@ -64,6 +69,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
         settings.setFrameRate(myParent.capFrameRate);
         parentApp.setSettings(settings);
         parentApp.mySettings = settings;
+        //parentApp.setDisplayStatView(true);
         parentApp.createCanvas();
         parentApp.startCanvas();
         JmeCanvasContext context = (JmeCanvasContext) parentApp.getContext();
@@ -114,6 +120,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
         resetLayerList = new javax.swing.JList();
         jScrollPane2 = new javax.swing.JScrollPane();
         currentLavaLayers = new javax.swing.JList();
+        jCheckBox1 = new javax.swing.JCheckBox();
         jPanel5 = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -149,7 +156,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
                 .addComponent(initOneLayerCompetitionLavaBased)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(iterateOneLayerCompetitionLavaBased)
-                .addGap(0, 56, Short.MAX_VALUE))
+                .addGap(0, 64, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -187,7 +194,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
                 .addComponent(initOneLayerCompetitionFacilityBased)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(iterateOneLayerCompetitionFacilityBased)
-                .addContainerGap(56, Short.MAX_VALUE))
+                .addContainerGap(64, Short.MAX_VALUE))
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -195,7 +202,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(initOneLayerCompetitionFacilityBased)
                     .addComponent(iterateOneLayerCompetitionFacilityBased))
-                .addGap(34, 34, 34))
+                .addContainerGap(33, Short.MAX_VALUE))
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Multi layer competition zone based"));
@@ -216,7 +223,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
             }
         });
 
-        numZonesSpinner.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(5), Integer.valueOf(1), null, Integer.valueOf(1)));
+        numZonesSpinner.setModel(new javax.swing.SpinnerNumberModel(5, 1, null, 1));
 
         jLabel2.setText("Number of Zones:");
 
@@ -235,7 +242,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addGap(7, 7, 7)
-                        .addComponent(numZonesSpinner)))
+                        .addComponent(numZonesSpinner, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -278,7 +285,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
                 .addComponent(initOneLayerNonCompetition)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(iterateOneLayerNonCompetition)
-                .addContainerGap(56, Short.MAX_VALUE))
+                .addContainerGap(64, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -316,7 +323,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
                 .addComponent(initMultiLayerNonCompetition)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(iterateMultiLayerNonCompetition)
-                .addContainerGap(56, Short.MAX_VALUE))
+                .addContainerGap(64, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -329,7 +336,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
 
         jLabel7.setText("NumCPUs:");
 
-        numCPUSpinner.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(1), Integer.valueOf(1), null, Integer.valueOf(1)));
+        numCPUSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
         numCPUSpinner.setMinimumSize(new java.awt.Dimension(35, 20));
         numCPUSpinner.setPreferredSize(new java.awt.Dimension(60, 20));
 
@@ -339,7 +346,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
 
         jLabel9.setText("Num facilities:");
 
-        numFacilitiesSpinner.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(4), Integer.valueOf(1), null, Integer.valueOf(1)));
+        numFacilitiesSpinner.setModel(new javax.swing.SpinnerNumberModel(4, 1, null, 1));
 
         jLabel1.setText("Lava value:");
 
@@ -367,6 +374,14 @@ public class SimulatorDebug extends javax.swing.JDialog {
         });
         jScrollPane2.setViewportView(currentLavaLayers);
 
+        jCheckBox1.setSelected(true);
+        jCheckBox1.setText("Is batch rendering");
+        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -375,7 +390,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 10, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
                         .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -397,14 +412,18 @@ public class SimulatorDebug extends javax.swing.JDialog {
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addComponent(jLabel7)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(numCPUSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel6)
                             .addComponent(jScrollPane3)
-                            .addComponent(jScrollPane2))))
+                            .addComponent(jScrollPane2)
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jCheckBox1)
+                                    .addGroup(jPanel4Layout.createSequentialGroup()
+                                        .addComponent(jLabel7)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(numCPUSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(jLabel3)
+                                    .addComponent(jLabel6))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -442,7 +461,9 @@ public class SimulatorDebug extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel6)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jCheckBox1)
                 .addContainerGap())
         );
 
@@ -460,11 +481,11 @@ public class SimulatorDebug extends javax.swing.JDialog {
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 458, Short.MAX_VALUE)
+            .addGap(0, 552, Short.MAX_VALUE)
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 555, Short.MAX_VALUE)
+            .addGap(0, 612, Short.MAX_VALUE)
         );
 
         jSplitPane1.setRightComponent(jPanel5);
@@ -488,13 +509,39 @@ public class SimulatorDebug extends javax.swing.JDialog {
         myParent.flowControl.lavaBuffer.clear();
         myParent.flowControl.queue_lavaBuffer.clear();
         myParent.flowControl.queue_lavaRemove.clear();
+        parentApp.enqueue(new Callable() {
+            public Object call() throws Exception {
+                myParent.preProcessor.setWaysColorLayerBased(myParent.allData, resetLayerList.getSelectedIndex());
+                parentApp.isRefreshing = true;
+                return null;
+            }
+        });
         testFacilities = initFacilities((int) numFacilitiesSpinner.getValue());
+        //REPORTING
+        String detailedResults = "Zoning and evaluating based on bulky heuristic." + System.lineSeparator();
+        Calendar currentDate = Calendar.getInstance();
+        Date date = currentDate.getTime();
+        double startRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
+        long startTime = System.nanoTime();
+        //REPORTING
         if (resetLayerList.getSelectedIndex() == 0) {
             myParent.flowControl.simulateOneLayerCompetingLavaBased(testFacilities, myParent.findLayer("traffic"), (int) numCPUSpinner.getValue(), -1, isIterative.isSelected());
         } else {
             myParent.flowControl.simulateOneLayerCompetingLavaBased(testFacilities, myParent.findLayer("traffic"), (int) numCPUSpinner.getValue(), resetLayerList.getSelectedIndex() - 1, isIterative.isSelected());
         }
+        //REPORTING
+        long endTime = System.nanoTime();
+        double elapsed = ((endTime - startTime) / 1000000000);
+        double endRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
+        double usedRAM = endRAM - startRAM;
+        if (isIterative.isSelected() == false) {
+            System.out.println("Elapsed time: " + elapsed);
+            System.out.println("Used RAM: " + usedRAM);
+        }
+        //REPORTING
         setLavaLayersList();
+        isLavaBased = true;
+        isFacilityBased = false;
         isZoneActive = false;
     }//GEN-LAST:event_initOneLayerCompetitionLavaBasedActionPerformed
 
@@ -509,12 +556,40 @@ public class SimulatorDebug extends javax.swing.JDialog {
     private void initOneLayerCompetitionFacilityBasedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_initOneLayerCompetitionFacilityBasedActionPerformed
         // TODO add your handling code here:
         testFacilities = initFacilities((int) numFacilitiesSpinner.getValue());
+        parentApp.enqueue(new Callable() {
+            public Object call() throws Exception {
+                myParent.preProcessor.setWaysColorLayerBased(myParent.allData, resetLayerList.getSelectedIndex());
+                myParent.preProcessor.shadeColors(myParent.allData);
+                parentApp.isRefreshing = true;
+                return null;
+            }
+        });
+        
+        //REPORTING
+        String detailedResults = "Zoning and evaluating based on bulky heuristic." + System.lineSeparator();
+        Calendar currentDate = Calendar.getInstance();
+        Date date = currentDate.getTime();
+        double startRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
+        long startTime = System.nanoTime();
+        //REPORTING
         if (resetLayerList.getSelectedIndex() == 0) {
             myParent.flowControl.simulateOneLayerCompetingFacilityBased(testFacilities, myParent.findLayer("traffic"), (int) numCPUSpinner.getValue(), -1, isIterative.isSelected());
         } else {
             myParent.flowControl.simulateOneLayerCompetingFacilityBased(testFacilities, myParent.findLayer("traffic"), (int) numCPUSpinner.getValue(), resetLayerList.getSelectedIndex() - 1, isIterative.isSelected());
         }
+        //REPORTING
+        long endTime = System.nanoTime();
+        double elapsed = ((endTime - startTime) / 1000000000);
+        double endRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
+        double usedRAM = endRAM - startRAM;
+        if (isIterative.isSelected() == false) {
+            System.out.println("Elapsed time: " + elapsed);
+            System.out.println("Used RAM: " + usedRAM);
+        }
+        //REPORTING
         setLavaLayersList();
+        isLavaBased = false;
+        isFacilityBased = true;
         isZoneActive = false;
     }//GEN-LAST:event_initOneLayerCompetitionFacilityBasedActionPerformed
 
@@ -528,13 +603,32 @@ public class SimulatorDebug extends javax.swing.JDialog {
 
     private void initMultiLayerZoneBasedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_initMultiLayerZoneBasedActionPerformed
         // TODO add your handling code here:
-        testZones = initZone((int)numZonesSpinner.getValue(), (int) numFacilitiesSpinner.getValue());
+        testZones = initZone((int) numZonesSpinner.getValue(), (int) numFacilitiesSpinner.getValue());
+        //REPORTING
+        String detailedResults = "Zoning and evaluating based on bulky heuristic." + System.lineSeparator();
+        Calendar currentDate = Calendar.getInstance();
+        Date date = currentDate.getTime();
+        double startRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
+        long startTime = System.nanoTime();
+        //REPORTING
         if (resetLayerList.getSelectedIndex() == 0) {
             myParent.flowControl.simulateMultiLayerCompetingZoneBased(testZones, myParent.findLayer("traffic"), (int) numCPUSpinner.getValue(), -1, isIterative.isSelected());
         } else {
             myParent.flowControl.simulateMultiLayerCompetingZoneBased(testZones, myParent.findLayer("traffic"), (int) numCPUSpinner.getValue(), resetLayerList.getSelectedIndex() - 1, isIterative.isSelected());
         }
+        //REPORTING
+        long endTime = System.nanoTime();
+        double elapsed = ((endTime - startTime) / 1000000000);
+        double endRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
+        double usedRAM = endRAM - startRAM;
+        if (isIterative.isSelected() == false) {
+            System.out.println("Elapsed time: " + elapsed);
+            System.out.println("Used RAM: " + usedRAM);
+        }
+        //REPORTING
         setLavaLayersList();
+        isLavaBased = false;
+        isFacilityBased = false;
         isZoneActive = true;
     }//GEN-LAST:event_initMultiLayerZoneBasedActionPerformed
 
@@ -551,6 +645,8 @@ public class SimulatorDebug extends javax.swing.JDialog {
         testFacilities = initFacilities(1);
         myParent.flowControl.simulateOneLayerNonCompetingSerial(testFacilities, myParent.findLayer("traffic"), isIterative.isSelected());
         setLavaLayersList();
+        isLavaBased = false;
+        isFacilityBased = true;
         isZoneActive = false;
     }//GEN-LAST:event_initOneLayerNonCompetitionActionPerformed
 
@@ -571,6 +667,8 @@ public class SimulatorDebug extends javax.swing.JDialog {
             myParent.flowControl.simulateMultiLayerCompetingZoneBased(testZones, myParent.findLayer("traffic"), (int) numCPUSpinner.getValue(), resetLayerList.getSelectedIndex() - 1, isIterative.isSelected());
         }
         setLavaLayersList();
+        isLavaBased = false;
+        isFacilityBased = true;
         isZoneActive = true;
     }//GEN-LAST:event_initMultiLayerNonCompetitionActionPerformed
 
@@ -593,6 +691,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
 
     private void currentLavaLayersValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_currentLavaLayersValueChanged
         // TODO add your handling code here:
+
         parentApp.enqueue(new Callable() {
             public Object call() throws Exception {
                 if (currentLavaLayers.getSelectedIndex() != -1) {
@@ -609,7 +708,12 @@ public class SimulatorDebug extends javax.swing.JDialog {
                             parentApp.headquarter(testFacilities[i].renderingLocation, testFacilities[i].capacity, "center");
                         }
                     }
-                    myParent.preProcessor.setWaysColorLavaLayerBased(myParent.allData, currentLavaLayers.getSelectedIndex());
+                    if (isLavaBased == true) {
+                        myParent.preProcessor.setWaysColorLavaLayerBased(myParent.allData, currentLavaLayers.getSelectedIndex());
+                    } else {
+                        myParent.preProcessor.setWaysColorBurntByFacility(myParent.allData, currentLavaLayers.getSelectedIndex());
+                    }
+                    parentApp.refresh_lava(testFacilities, isLavaBased);
                     parentApp.isRefreshing = true;
                     return null;
                 }
@@ -634,8 +738,20 @@ public class SimulatorDebug extends javax.swing.JDialog {
 
     }//GEN-LAST:event_resetLayerListValueChanged
 
+    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+        parentApp.isBatchRendering = jCheckBox1.isSelected();
+        if (currentLavaLayers.getSelectedIndex() != -1) {
+            currentLavaLayersValueChanged(null);
+        }
+    }//GEN-LAST:event_jCheckBox1ActionPerformed
+
     public FacilityLocation[] initFacilities(int numFacilities) {
         FacilityLocation output[] = new FacilityLocation[numFacilities];
+        Color colors[] = new Color[numFacilities];
+        for (int i = 0; i < numFacilities; i++) {
+            colors[i] = new Color(Color.HSBtoRGB((float) i / (float) numFacilities - 1, 1, 1));
+
+        }
         for (int i = 0; i < numFacilities; i++) {
             int way_init = (int) (Math.round(Math.random() * (myParent.allData.all_Ways.length - 1)));
             int node_init = (int) (Math.round(Math.random() * (myParent.allData.all_Ways[way_init].myNodes.length - 1)));
@@ -644,6 +760,8 @@ public class SimulatorDebug extends javax.swing.JDialog {
                 node_init = (int) (Math.round(Math.random() * (myParent.allData.all_Ways[way_init].myNodes.length - 1)));
             } while (myParent.allData.all_Ways[way_init].type == null);
             output[i] = new FacilityLocation(myParent, myParent.allData.all_Ways[way_init].myNodes[node_init], myParent.allData.all_Ways[way_init], Double.parseDouble(lavaAmount.getText()));
+            output[i].color = colors[i];
+            output[i].isDecoyable = true;
         }
 //        System.out.println(output[0].nodeLocation.id);
         return output;
@@ -711,6 +829,7 @@ public class SimulatorDebug extends javax.swing.JDialog {
     private javax.swing.JButton iterateOneLayerCompetitionFacilityBased;
     private javax.swing.JButton iterateOneLayerCompetitionLavaBased;
     private javax.swing.JButton iterateOneLayerNonCompetition;
+    private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

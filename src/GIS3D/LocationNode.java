@@ -4,6 +4,7 @@
  */
 package GIS3D;
 
+import Simulation.FacilityLocation;
 import com.jme3.math.Vector3f;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class LocationNode implements Serializable {
     
     static final long serialVersionUID = 3L;
 
-    public String id;
+    public long id;
     public double lat;
     public double lon;
     public boolean isBurned = false;
@@ -33,7 +34,10 @@ public class LocationNode implements Serializable {
     public Grid myGrid;
     public Vector3f renderingLocation;
     public int myOrder;
-    LocationNode(String passed_id, double passed_lat, double passed_lon,int passedorder) {
+    
+    public transient FacilityLocation burntBy[];
+    
+    LocationNode(long passed_id, double passed_lat, double passed_lon,int passedorder) {
         id = passed_id;
         lat = passed_lat;
         lon = passed_lon;

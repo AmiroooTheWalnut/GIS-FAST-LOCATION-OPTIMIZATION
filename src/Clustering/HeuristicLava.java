@@ -131,7 +131,7 @@ public class HeuristicLava {
     public int detectIndex(Way way, LocationNode node) {
         int return_val = -1;
         for (int i = 0; i < way.myNodes.length; i++) {
-            if (node.id.equals(way.myNodes[i].id)) {
+            if (node.id==way.myNodes[i].id) {
                 return_val = i;
             }
         }
@@ -145,7 +145,7 @@ public class HeuristicLava {
     public void detectAdjacent(){
         adjacent.clear();
         for (int i = 0; i < currentNode.myWays.length; i++) {
-            if (!currentNode.myWays[i].id.equals(currentWay.id)) {
+            if (currentNode.myWays[i].id!=currentWay.id) {
                 int temp = detectIndex(currentNode.myWays[i], currentNode);
                 if (temp != -1) {
                     try {

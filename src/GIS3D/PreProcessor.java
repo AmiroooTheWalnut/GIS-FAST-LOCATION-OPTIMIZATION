@@ -14,9 +14,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -24,9 +26,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.jdom2.Content;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -45,9 +55,9 @@ public class PreProcessor {
         try {
             //REPORTING
             String detailedResults = "Prepcoressing OSM data." + System.lineSeparator();
-            detailedResults = detailedResults + "Source file: " + file_path+ System.lineSeparator();
-            detailedResults = detailedResults + "Number of horizontal simple grid: " + h_grid_num+ System.lineSeparator();
-            detailedResults = detailedResults + "Number of vertical simple grid: " + v_grid_num+ System.lineSeparator();
+            detailedResults = detailedResults + "Source file: " + file_path + System.lineSeparator();
+            detailedResults = detailedResults + "Number of horizontal simple grid: " + h_grid_num + System.lineSeparator();
+            detailedResults = detailedResults + "Number of vertical simple grid: " + v_grid_num + System.lineSeparator();
             Calendar currentDate = Calendar.getInstance();
             Date date = currentDate.getTime();
             double startRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
@@ -55,119 +65,24 @@ public class PreProcessor {
             //REPORTING
 
             AllData allData = new AllData();
-            String sCurrentLine;
-            File fXmlFile = new File(file_path);
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(fXmlFile);
-            NodeList all_nodes = doc.getElementsByTagName("node");
-            //System.out.println(all_nodes.getLength());
-            allData.all_Nodes = new LocationNode[all_nodes.getLength()];
-            NodeList all_ways = doc.getElementsByTagName("way");
-            allData.all_Ways = new Way[all_ways.getLength()];
-            System.out.println("hand made read started");
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file_path)));
 
-            int m = 0;
-            int k = 0;
-            ArrayList nodes_tempo = new ArrayList();
-            int line_count = 0;
-            int thousand_count = 0;
-            boolean isInsideWay = false;
-
-            while ((sCurrentLine = br.readLine()) != null) {
-                //System.out.println(sCurrentLine);
-                if (line_count > 10000) {
-                    thousand_count = thousand_count + 1;
-                    System.out.println(thousand_count);
-                    line_count = 0;
-                }
-
-                if (sCurrentLine.contains("<node")) {
-                    int start = sCurrentLine.indexOf("id=\"");
-                    String temp = sCurrentLine.substring(start + 4);
-                    int end = temp.indexOf("\"");
-                    String id = temp.substring(0, end);
-                    //System.out.println(id);
-                    start = sCurrentLine.indexOf("lat=\"");
-                    temp = sCurrentLine.substring(start + 5);
-                    end = temp.indexOf("\"");
-                    String lat_str = temp.substring(0, end);
-                    double lat = Double.parseDouble(lat_str);
-                    //System.out.println(lat);
-                    start = sCurrentLine.indexOf("lon=\"");
-                    temp = sCurrentLine.substring(start + 5);
-                    end = temp.indexOf("\"");
-                    String lon_str = temp.substring(0, end);
-                    double lon = Double.parseDouble(lon_str);
-                    //System.out.println(lon);
-                    allData.all_Nodes[m] = new LocationNode(id, lat, lon, m);
-                    m = m + 1;
-                }
-
-                if (sCurrentLine.contains("<way")) {
-                    int start = sCurrentLine.indexOf("id=\"");
-                    String temp = sCurrentLine.substring(start + 4);
-                    int end = temp.indexOf("\"");
-                    String id = temp.substring(0, end);
-                    //System.out.println(id);
-                    allData.all_Ways[k] = new Way(id);
-                    isInsideWay = true;
-                }
-                if (isInsideWay) {
-                    if (sCurrentLine.contains("<tag k=\"highway\"")) {
-                        int start = sCurrentLine.indexOf("v=\"");
-                        String temp = sCurrentLine.substring(start + 3);
-                        int end = temp.indexOf("\"");
-                        String type_str = temp.substring(0, end);
-                        allData.all_Ways[k].type = type_str;
-                        allData.all_Ways[k].setTypeWeight();
-                        //System.out.println(type_str);
-                    }
-                    if (sCurrentLine.contains("<tag k=\"oneway\"")) {
-                        int start = sCurrentLine.indexOf("v=\"");
-                        String temp = sCurrentLine.substring(start + 3);
-                        int end = temp.indexOf("\"");
-                        String oneway_str = temp.substring(0, end);
-                        boolean oneWay = false;
-                        if ("yes".equals(oneway_str)) {
-                            oneWay = true;
-                        }
-                        allData.all_Ways[k].isOneWay = oneWay;
-                        //System.out.println(oneWay);
-                    }
-                    if (sCurrentLine.contains("<nd ref=\"")) {
-                        int start = sCurrentLine.indexOf("ref=\"");
-                        String temp = sCurrentLine.substring(start + 5);
-                        int end = temp.indexOf("\"");
-                        String temp_node = temp.substring(0, end);
-
-                        //ArrayList ways_tempo=new ArrayList();
-                        for (int i = 0; i < allData.all_Nodes.length; i++) {
-                            //System.out.println(all_Nodes[i].id);
-                            //System.out.println(all_Ways[k].id);
-                            if (allData.all_Nodes[i].id.equals(temp_node)) {
-                                nodes_tempo.add(allData.all_Nodes[i]);
-                                //System.out.println("found");
-                            }
-                        }
-                        Object[] nodes_tempo_array = nodes_tempo.toArray();
-                        LocationNode[] temp_LocationNode = new LocationNode[nodes_tempo_array.length];
-                        for (int i = 0; i < nodes_tempo_array.length; i++) {
-                            temp_LocationNode[i] = (LocationNode) nodes_tempo_array[i];
-                            //System.out.println(temp_LocationNode[i].id);
-                        }
-                        allData.all_Ways[k].myNodes = temp_LocationNode;
-                    }
-                }
-                if (sCurrentLine.contains("</way>")) {
-                    nodes_tempo.clear();
-                    isInsideWay = false;
-                    k = k + 1;
-                }
-                line_count = line_count + 1;
+            String extension = "";
+            int index = file_path.lastIndexOf('.');
+            if (index > 0) {
+                extension = file_path.substring(index + 1);
+                System.out.println("File extension is " + extension);
             }
-            br.close();
+            if (extension.equals("osm")) {
+//                allData = readOSMPageXMLFile_OLD(allData, file_path);//Old XML reader
+                allData = readOSMPageXMLFile(allData, file_path);
+            } else if (extension.equals("json")) {
+                allData = readOSMOverpassJSONFile(allData, file_path);
+            } else {
+                System.out.println("THE FILE EXTENSION IS UNKNOWN! IF YOU ARE SURE WHAT YOUR FILE IS, RENAME ITS EXTENSION!");
+                System.out.println("ACCEPTABLE EXTENSIONS: OSM, JSON");
+                return null;
+            }
+
             System.out.println("preprocess");
 
             allData.myScale = new Scaling(allData.all_Nodes);
@@ -175,7 +90,7 @@ public class PreProcessor {
             allData.grid = new Grid[h_grid_num][v_grid_num];
             for (int i = 0; i < h_grid_num; i++) {
                 for (int j = 0; j < v_grid_num; j++) {
-                    allData.grid[i][j] = new Grid(i, j, allData.myScale.min_x + i * ((allData.myScale.max_x - allData.myScale.min_x) / (double) allData.grid.length), allData.myScale.min_x + (i + 1) * ((allData.myScale.max_x - allData.myScale.min_x) / (double) allData.grid.length), allData.myScale.min_y + j * ((allData.myScale.max_y - allData.myScale.min_y) / (double) allData.grid[0].length), allData.myScale.min_y + (j + 1) * ((allData.myScale.max_y - allData.myScale.min_y) / (double) allData.grid[0].length),"Simple equal-width grid");
+                    allData.grid[i][j] = new Grid(i, j, allData.myScale.min_x + i * ((allData.myScale.max_x - allData.myScale.min_x) / (double) allData.grid.length), allData.myScale.min_x + (i + 1) * ((allData.myScale.max_x - allData.myScale.min_x) / (double) allData.grid.length), allData.myScale.min_y + j * ((allData.myScale.max_y - allData.myScale.min_y) / (double) allData.grid[0].length), allData.myScale.min_y + (j + 1) * ((allData.myScale.max_y - allData.myScale.min_y) / (double) allData.grid[0].length), "Simple equal-width grid");
                 }
             }
 
@@ -183,28 +98,52 @@ public class PreProcessor {
             if (numProcessors > Runtime.getRuntime().availableProcessors()) {
                 numProcessors = Runtime.getRuntime().availableProcessors();
             }
-            ParallelPreProcessor parallelFor[] = new ParallelPreProcessor[numProcessors];
-
+            
+            //\/\/\/ This part is for the new XML reader but not for old XML reader
+            ParallelInternalProcessWays parallelForWays[] = new ParallelInternalProcessWays[numProcessors];
+            
             for (int i = 0; i < numProcessors - 1; i++) {
-                parallelFor[i] = new ParallelPreProcessor(this, allData, (int) Math.floor(i * ((allData.all_Nodes.length) / numProcessors)), (int) Math.floor((i + 1) * ((allData.all_Nodes.length) / numProcessors)));
+                parallelForWays[i] = new ParallelInternalProcessWays(this, allData, (int) Math.floor(i * ((allData.all_Ways.length) / numProcessors)), (int) Math.floor((i + 1) * ((allData.all_Ways.length) / numProcessors)));
             }
-            parallelFor[numProcessors - 1] = new ParallelPreProcessor(this, allData, (int) Math.floor((numProcessors - 1) * ((allData.all_Nodes.length) / numProcessors)), allData.all_Nodes.length);
-
+            parallelForWays[numProcessors - 1] = new ParallelInternalProcessWays(this, allData, (int) Math.floor((numProcessors - 1) * ((allData.all_Ways.length) / numProcessors)), allData.all_Ways.length);
+            
             for (int i = 0; i < numProcessors; i++) {
                 //parallelFor[i].myThread.start();
-                parallelFor[i].myThread.start();
+                parallelForWays[i].myThread.start();
             }
             for (int i = 0; i < numProcessors; i++) {
                 try {
-                    parallelFor[i].myThread.join();
-                    System.out.println("thread " + i + "finished!");
+                    parallelForWays[i].myThread.join();
+                    System.out.println("thread " + i + "finished for ways!");
+                } catch (InterruptedException ie) {
+                    System.out.println(ie.toString());
+                }
+            }
+            //^^^ This part is for the new XML reader but not for old XML reader
+            
+            
+            ParallelPreProcessorNodes parallelForNodes[] = new ParallelPreProcessorNodes[numProcessors];
+            
+            for (int i = 0; i < numProcessors - 1; i++) {
+                parallelForNodes[i] = new ParallelPreProcessorNodes(this, allData, (int) Math.floor(i * ((allData.all_Nodes.length) / numProcessors)), (int) Math.floor((i + 1) * ((allData.all_Nodes.length) / numProcessors)));
+            }
+            parallelForNodes[numProcessors - 1] = new ParallelPreProcessorNodes(this, allData, (int) Math.floor((numProcessors - 1) * ((allData.all_Nodes.length) / numProcessors)), allData.all_Nodes.length);
+
+            for (int i = 0; i < numProcessors; i++) {
+                //parallelFor[i].myThread.start();
+                parallelForNodes[i].myThread.start();
+            }
+            for (int i = 0; i < numProcessors; i++) {
+                try {
+                    parallelForNodes[i].myThread.join();
+                    System.out.println("thread " + i + "finished for nodes!");
                 } catch (InterruptedException ie) {
                     System.out.println(ie.toString());
                 }
             }
             int numRefinedNodes = 0;
             for (int i = 0; i < numProcessors; i++) {
-                numRefinedNodes = numRefinedNodes + parallelFor[i].myRefinedDataNumber;
+                numRefinedNodes = numRefinedNodes + parallelForNodes[i].myRefinedDataNumber;
             }
 
             System.out.println("refine data");
@@ -228,10 +167,10 @@ public class PreProcessor {
                     }
                 }
             }
-            
-            detailedResults = detailedResults + "Number of nodes: " + allData.all_Nodes.length+ System.lineSeparator();
-            detailedResults = detailedResults + "Number of ways: " + allData.all_Ways.length+ System.lineSeparator();
-            
+
+            detailedResults = detailedResults + "Number of nodes: " + allData.all_Nodes.length + System.lineSeparator();
+            detailedResults = detailedResults + "Number of ways: " + allData.all_Ways.length + System.lineSeparator();
+
             //REPORTING
             long endTime = System.nanoTime();
             double elapsed = ((endTime - startTime) / 1000000000);
@@ -250,12 +189,294 @@ public class PreProcessor {
         return null;
     }
 
-    public int parallelInternalProcess(AllData allData, int i, int numRefinedNodes) {
+    public AllData readOSMOverpassJSONFile(AllData allData, String file_path) throws FileNotFoundException, IOException {
+        BufferedReader br;
+        br = new BufferedReader(new FileReader(file_path));
+        StringBuilder sb = new StringBuilder();
+        String st;
+        while ((st = br.readLine()) != null) {
+//                System.out.println(st);
+            sb.append(st);
+        }
+        br.close();
+        JSONObject jo = new JSONObject(sb.toString());
+        JSONArray elements = jo.getJSONArray("elements");
+        ArrayList<LocationNode> all_nodes = new ArrayList();
+        ArrayList<Way> all_ways = new ArrayList();
+
+        int elementCounter = 0;
+        int thousand_count = 0;
+
+        int nodeCounter = 0;
+        for (int i = 0; i < elements.length(); i++) {
+            JSONObject element = elements.getJSONObject(i);
+            String type = element.getString("type");
+            if (type.equals("node")) {
+                long id = element.getLong("id");
+                double lat = element.getDouble("lat");
+                double lon = element.getDouble("lon");
+                all_nodes.add(new LocationNode(id, lat, lon, nodeCounter));
+                nodeCounter = nodeCounter + 1;
+            }
+            elementCounter = elementCounter + 1;
+            if (elementCounter > 1000) {
+                thousand_count = thousand_count + 1;
+                System.out.println((thousand_count * 100 * 1000) / elements.length() + " percent for nodes");
+                elementCounter = 0;
+            }
+        }
+
+        elementCounter = 0;
+        thousand_count = 0;
+        for (int i = 0; i < elements.length(); i++) {
+            JSONObject element = elements.getJSONObject(i);
+            String type = element.getString("type");
+            if (type.equals("way")) {
+                int id = element.getInt("id");
+                all_ways.add(new Way(id));
+                all_ways.get(all_ways.size() - 1).type = element.getJSONObject("tags").getString("highway");
+                all_ways.get(all_ways.size() - 1).setTypeWeight();
+                if (element.getJSONObject("tags").has("oneway") == true) {
+                    if (element.getJSONObject("tags").getString("oneway").equals("yes")) {
+                        all_ways.get(all_ways.size() - 1).isOneWay = true;
+                    } else {
+                        all_ways.get(all_ways.size() - 1).isOneWay = false;
+                    }
+                } else {
+                    all_ways.get(all_ways.size() - 1).isOneWay = false;
+                }
+                JSONArray nodes = element.getJSONArray("nodes");
+                all_ways.get(all_ways.size() - 1).myNodesTemporaryID=new ArrayList();
+                for (int j = 0; j < nodes.length(); j++) {
+                    long nodeId = nodes.getLong(j);
+                    all_ways.get(all_ways.size() - 1).myNodesTemporaryID.add(nodeId);
+                }
+            }
+            elementCounter = elementCounter + 1;
+            if (elementCounter > 1000) {
+                thousand_count = thousand_count + 1;
+                System.out.println((thousand_count * 100 * 1000) / elements.length() + " percent for ways");
+                elementCounter = 0;
+            }
+        }
+
+        allData.all_Ways = all_ways.toArray(new Way[all_ways.size()]);
+        allData.all_Nodes = all_nodes.toArray(new LocationNode[all_nodes.size()]);
+        return allData;
+    }
+
+    public AllData readOSMPageXMLFile(AllData allData, String file_path) throws JDOMException, IOException, ParserConfigurationException, SAXException {
+        //Using the DOM parser to get the size of nodes and ways
+        File fXmlFile = new File(file_path);
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.parse(fXmlFile);
+        NodeList all_nodes = doc.getElementsByTagName("node");
+        //System.out.println(all_nodes.getLength());
+        allData.all_Nodes = new LocationNode[all_nodes.getLength()];
+        NodeList all_ways = doc.getElementsByTagName("way");
+        allData.all_Ways = new Way[all_ways.getLength()];
+
+        SAXBuilder saxBuilder = new SAXBuilder();
+        org.jdom2.Document document = saxBuilder.build(fXmlFile);
+        Element cl = (Element) document.getContent().get(0);
+        int nodeCounter = 0;
+        int wayCounter = 0;
+        for (int i = 0; i < cl.getContent().size(); i++) {
+            if (cl.getContent().get(i).getCType() == Content.CType.Element) {
+                if (((Element) cl.getContent(i)).getName().equals("node")) {
+                    long id = Long.parseLong(((Element) cl.getContent(i)).getAttributeValue("id"));
+                    double lat = Double.parseDouble(((Element) cl.getContent(i)).getAttributeValue("lat"));
+                    double lon = Double.parseDouble(((Element) cl.getContent(i)).getAttributeValue("lon"));
+                    allData.all_Nodes[nodeCounter] = new LocationNode(id, lat, lon, nodeCounter);
+                    nodeCounter = nodeCounter + 1;
+                }
+                if (((Element) cl.getContent(i)).getName().equals("way")) {
+                    long id = Long.parseLong(((Element) cl.getContent(i)).getAttributeValue("id"));
+                    allData.all_Ways[wayCounter] = new Way(id);
+                    
+                    allData.all_Ways[wayCounter].myNodesTemporaryID=new ArrayList();
+                    for (int j = 0; j < ((Element) cl.getContent(i)).getContentSize(); j++) {
+                        if ((((Element) cl.getContent(i)).getContent(j)).getCType() == Content.CType.Element) {
+                            if (((Element) ((Element) cl.getContent(i)).getContent(j)).getName().equals("tag")) {
+                                if(((Element) ((Element) cl.getContent(i)).getContent(j)).getAttributeValue("k").equals("highway")){
+                                    allData.all_Ways[wayCounter].type=((Element) ((Element) cl.getContent(i)).getContent(j)).getAttributeValue("v");
+                                    allData.all_Ways[wayCounter].setTypeWeight();
+                                }
+                            }
+                            if (((Element) ((Element) cl.getContent(i)).getContent(j)).getName().equals("nd")) {
+                                allData.all_Ways[wayCounter].myNodesTemporaryID.add(Long.parseLong(((Element) ((Element) cl.getContent(i)).getContent(j)).getAttributeValue("ref")));
+                            }
+                        }
+                    }
+                    wayCounter = wayCounter + 1;
+                }
+            }
+        }
+        return allData;
+    }
+
+    /*
+    * This function uses mixed XML DOM and manual reading. Really slow.
+     */
+    public AllData readOSMPageXMLFile_OLD(AllData allData, String file_path) throws IOException, SAXException, ParserConfigurationException {
+        String sCurrentLine;
+        File fXmlFile = new File(file_path);
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.parse(fXmlFile);
+        NodeList children = doc.getChildNodes();
+        NodeList all_nodes = doc.getElementsByTagName("node");
+        //System.out.println(all_nodes.getLength());
+        allData.all_Nodes = new LocationNode[all_nodes.getLength()];
+        NodeList all_ways = doc.getElementsByTagName("way");
+        allData.all_Ways = new Way[all_ways.getLength()];
+        System.out.println("hand made read started");
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file_path)));
+
+        int m = 0;
+        int k = 0;
+        ArrayList nodes_tempo = new ArrayList();
+        int line_count = 0;
+        int thousand_count = 0;
+        boolean isInsideWay = false;
+
+        while ((sCurrentLine = br.readLine()) != null) {
+            //System.out.println(sCurrentLine);
+            if (line_count > 10000) {
+                thousand_count = thousand_count + 1;
+                System.out.println(thousand_count);
+                line_count = 0;
+            }
+
+            if (sCurrentLine.contains("<node")) {
+                int start = sCurrentLine.indexOf("id=\"");
+                String temp = sCurrentLine.substring(start + 4);
+                int end = temp.indexOf("\"");
+                String id = temp.substring(0, end);
+                //System.out.println(id);
+                start = sCurrentLine.indexOf("lat=\"");
+                temp = sCurrentLine.substring(start + 5);
+                end = temp.indexOf("\"");
+                String lat_str = temp.substring(0, end);
+                double lat = Double.parseDouble(lat_str);
+                //System.out.println(lat);
+                start = sCurrentLine.indexOf("lon=\"");
+                temp = sCurrentLine.substring(start + 5);
+                end = temp.indexOf("\"");
+                String lon_str = temp.substring(0, end);
+                double lon = Double.parseDouble(lon_str);
+                //System.out.println(lon);
+                allData.all_Nodes[m] = new LocationNode(Long.parseLong(id), lat, lon, m);
+                m = m + 1;
+            }
+
+            if (sCurrentLine.contains("<way")) {
+                int start = sCurrentLine.indexOf("id=\"");
+                String temp = sCurrentLine.substring(start + 4);
+                int end = temp.indexOf("\"");
+                String id = temp.substring(0, end);
+                //System.out.println(id);
+                allData.all_Ways[k] = new Way(Integer.parseInt(id));
+                isInsideWay = true;
+            }
+            if (isInsideWay) {
+                if (sCurrentLine.contains("<tag k=\"highway\"")) {
+                    int start = sCurrentLine.indexOf("v=\"");
+                    String temp = sCurrentLine.substring(start + 3);
+                    int end = temp.indexOf("\"");
+                    String type_str = temp.substring(0, end);
+                    allData.all_Ways[k].type = type_str;
+                    allData.all_Ways[k].setTypeWeight();
+                    //System.out.println(type_str);
+                }
+                if (sCurrentLine.contains("<tag k=\"oneway\"")) {
+                    int start = sCurrentLine.indexOf("v=\"");
+                    String temp = sCurrentLine.substring(start + 3);
+                    int end = temp.indexOf("\"");
+                    String oneway_str = temp.substring(0, end);
+                    boolean oneWay = false;
+                    if ("yes".equals(oneway_str)) {
+                        oneWay = true;
+                    }
+                    allData.all_Ways[k].isOneWay = oneWay;
+                    //System.out.println(oneWay);
+                }
+                if (sCurrentLine.contains("<nd ref=\"")) {
+                    int start = sCurrentLine.indexOf("ref=\"");
+                    String temp = sCurrentLine.substring(start + 5);
+                    int end = temp.indexOf("\"");
+                    long temp_node = Long.parseLong(temp.substring(0, end));
+
+                    //ArrayList ways_tempo=new ArrayList();
+                    for (int i = 0; i < allData.all_Nodes.length; i++) {
+//                        System.out.println(allData.all_Nodes[i].id);
+//                        System.out.println(allData.all_Ways[k].id);
+                        if (allData.all_Nodes[i].id == temp_node) {
+                            nodes_tempo.add(allData.all_Nodes[i]);
+//                            System.out.println("found");
+                            break;
+                        }
+                    }
+                    Object[] nodes_tempo_array = nodes_tempo.toArray();
+                    LocationNode[] temp_LocationNode = new LocationNode[nodes_tempo_array.length];
+//                    System.out.println(nodes_tempo.size()+"!");
+                    for (int i = 0; i < nodes_tempo_array.length; i++) {
+                        temp_LocationNode[i] = (LocationNode) nodes_tempo_array[i];
+                        //System.out.println(temp_LocationNode[i].id);
+                    }
+                    allData.all_Ways[k].myNodes = temp_LocationNode;
+                }
+            }
+            if (sCurrentLine.contains("</way>")) {
+                nodes_tempo.clear();
+                isInsideWay = false;
+                k = k + 1;
+            }
+            line_count = line_count + 1;
+        }
+        br.close();
+        return allData;
+    }
+
+    public void parallelInternalProcessWays(AllData allData, int wayIndex) {
+        LocationNode nodeBuffer[] = new LocationNode[1000];
+        int counter = 0;
+        for (int k = 0; k < allData.all_Ways[wayIndex].myNodesTemporaryID.size(); k++) {
+            for (int j = 0; j < allData.all_Nodes.length; j++) {
+                if (allData.all_Ways[wayIndex].myNodesTemporaryID.get(k) == allData.all_Nodes[j].id) {
+                    nodeBuffer[counter] = allData.all_Nodes[j];
+                    counter = counter + 1;
+                    //allData.all_Ways[wayIndex].myNodesTemporaryID.remove(k);
+                    break;
+                }
+            }
+        }
+        allData.all_Ways[wayIndex].myNodesTemporaryID.clear();
+//        for (int j = 0; j < allData.all_Nodes.length; j++) {
+//            for (int k = 0; k < allData.all_Ways[wayIndex].myNodesTemporaryID.size(); k++) {
+//                if (allData.all_Ways[wayIndex].myNodesTemporaryID.get(k) == allData.all_Nodes[j].id) {
+//                    nodeBuffer[counter] = allData.all_Nodes[j];
+//                    counter = counter + 1;
+//                    allData.all_Ways[wayIndex].myNodesTemporaryID.remove(k);
+//                }
+//            }
+//            if (allData.all_Ways[wayIndex].myNodesTemporaryID.isEmpty()) {
+//                break;
+//            }
+//        }
+        LocationNode[] temp_Nodes = new LocationNode[counter];
+        System.arraycopy(nodeBuffer, 0, temp_Nodes, 0, counter);
+
+        allData.all_Ways[wayIndex].myNodes = temp_Nodes;
+    }
+
+    public int parallelInternalProcessNodes(AllData allData, int i, int numRefinedNodes) {
         //ArrayList output = new ArrayList();
 
         boolean isAllwaysChecked = false;
 
-        Way ways_tempo[] = new Way[1000];
+        Way ways_tempo[] = new Way[100];
         int counter = 0;
         for (int j = 0; j < allData.all_Ways.length; j++) {
 
@@ -272,7 +493,7 @@ public class PreProcessor {
             }
 
             for (int l = 0; l < allData.all_Ways[j].myNodes.length; l++) {
-                if (allData.all_Ways[j].myNodes[l].id.equals(allData.all_Nodes[i].id)) {
+                if (allData.all_Ways[j].myNodes[l].id == allData.all_Nodes[i].id) {
                     ways_tempo[counter] = allData.all_Ways[j];
                     counter = counter + 1;
                 }
@@ -362,6 +583,41 @@ public class PreProcessor {
             }
         }
     }
+    
+    public void setWaysColorBurntByFacility(AllData allData, int activeLavaLayer) {
+        for (int i = 0; i < allData.all_Ways.length; i++) {
+            for (int j = 0; j < allData.all_Ways[i].myNodes.length; j++) {
+                if (allData.all_Ways[i].myNodes[j].isBurned==false) {
+                    
+                }else{
+                    try{
+                    allData.all_Ways[i].color[3 * j + 0] = allData.all_Ways[i].myNodes[j].burntBy[activeLavaLayer].color.getRed()/255f;
+                    allData.all_Ways[i].color[3 * j + 1] = allData.all_Ways[i].myNodes[j].burntBy[activeLavaLayer].color.getGreen()/255f;
+                    allData.all_Ways[i].color[3 * j + 2] = allData.all_Ways[i].myNodes[j].burntBy[activeLavaLayer].color.getBlue()/255f;
+                    }catch(Exception ex){
+                        System.out.println("!!!");
+                    }
+                }
+            }
+        }
+//        for (int i = 0; i < allData.all_Ways.length; i++) {
+//            for (int j = 0; j < allData.all_Ways[i].myNodes.length; j++) {
+//                allData.all_Ways[i].myNodes[j].isBurned=true;
+//            }
+//        }
+    }
+    
+    public void shadeColors(AllData allData){
+        for (int i = 0; i < allData.all_Ways.length; i++) {
+            for (int j = 0; j < allData.all_Ways[i].myNodes.length; j++) {
+                if (allData.all_Ways[i].myNodes[j].isBurned==false) {
+                    allData.all_Ways[i].color[3 * j + 0] = allData.all_Ways[i].color[3 * j + 0]/3f;
+                    allData.all_Ways[i].color[3 * j + 1] = allData.all_Ways[i].color[3 * j + 1]/3f;
+                    allData.all_Ways[i].color[3 * j + 2] = allData.all_Ways[i].color[3 * j + 2]/3f;
+                }
+            }
+        }
+    }
 
     public void setWaysColorStatic(AllData allData, Color color) {
         for (int i = 0; i < allData.all_Ways.length; i++) {
@@ -425,10 +681,12 @@ public class PreProcessor {
             return result;
         } else if (((LayerDefinition) allData.all_Layers.get(activeLayer)).myType.equals("numeric")) {
             float temp = new Float((Double) allData.all_Ways[i].myNodes[j].layers.get(activeLayer));
+            double maxVal = ((LayerDefinition) allData.all_Layers.get(activeLayer)).maxValue;
+            double minVal = ((LayerDefinition) allData.all_Layers.get(activeLayer)).minValue;
             if (temp >= 0) {
-                result[0] = temp;
+                result[0] = (float) ((temp - minVal) / (maxVal - minVal));
                 result[1] = 0;
-                result[2] = 1 - temp;
+                result[2] = 1 - (float) ((temp - minVal) / (maxVal - minVal));
             } else {
                 result[0] = 0;
                 result[1] = 1;
@@ -478,7 +736,7 @@ public class PreProcessor {
 
             //REPORTING
             String detailedResults = "Load serializable preprocessed database." + System.lineSeparator();
-            detailedResults = detailedResults + "Source file: " + file_path+"|"+file_name;
+            detailedResults = detailedResults + "Source file: " + file_path + "|" + file_name;
             Calendar currentDate = Calendar.getInstance();
             Date date = currentDate.getTime();
             double startRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
@@ -528,7 +786,7 @@ public class PreProcessor {
 
             //REPORTING
             String detailedResults = "Load kryo preprocessed database." + System.lineSeparator();
-            detailedResults = detailedResults + "Source file: " + file_path+"|"+file_name+ System.lineSeparator();
+            detailedResults = detailedResults + "Source file: " + file_path + "|" + file_name + System.lineSeparator();
             Calendar currentDate = Calendar.getInstance();
             Date date = currentDate.getTime();
             double startRAM = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024.0;
@@ -538,10 +796,10 @@ public class PreProcessor {
             input = new Input(new FileInputStream(file_path + "\\" + file_name + "." + "bin"));
             allData = kryo.readObject(input, AllData.class);
             input.close();
-            detailedResults = detailedResults + "Number of nodes: " + allData.all_Nodes.length+ System.lineSeparator();
-            detailedResults = detailedResults + "Number of ways: " + allData.all_Ways.length+ System.lineSeparator();
-            detailedResults = detailedResults + "Number of layers: " + allData.all_Layers.size()+ System.lineSeparator();
-            detailedResults = detailedResults + "Number of reports: " + allData.results.size()+ System.lineSeparator();
+            detailedResults = detailedResults + "Number of nodes: " + allData.all_Nodes.length + System.lineSeparator();
+            detailedResults = detailedResults + "Number of ways: " + allData.all_Ways.length + System.lineSeparator();
+            detailedResults = detailedResults + "Number of layers: " + allData.all_Layers.size() + System.lineSeparator();
+            detailedResults = detailedResults + "Number of reports: " + allData.results.size() + System.lineSeparator();
 
             //REPORTING
             long endTime = System.nanoTime();

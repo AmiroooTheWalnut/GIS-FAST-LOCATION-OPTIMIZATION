@@ -235,7 +235,7 @@ public class BenchmarkModel {
         //REMOVE AFTER INDEX IS DETERMINED
         LocationNode supplier = null;
         for (int k = 0; k < myParent.allData.all_Nodes.length; k++) {
-            if (myParent.allData.all_Nodes[k].id.equals("430873946")) {
+            if (myParent.allData.all_Nodes[k].id==430873946) {
                 System.out.println("Supplier location: Node number " + k + " ID: " + "430873946");
                 supplier = myParent.allData.all_Nodes[k];
                 break;
@@ -354,7 +354,7 @@ public class BenchmarkModel {
         //REMOVE AFTER INDEX IS DETERMINED
         LocationNode supplier = null;
         for (int k = 0; k < myParent.allData.all_Nodes.length; k++) {
-            if (myParent.allData.all_Nodes[k].id.equals("430873946")) {
+            if (myParent.allData.all_Nodes[k].id==430873946) {
                 System.out.println("Supplier location: Node number " + k + " ID: " + "430873946");
                 supplier = myParent.allData.all_Nodes[k];
                 break;
@@ -480,7 +480,7 @@ public class BenchmarkModel {
         LocationNode supplier = null;
         for (int k = 0; k < myParent.allData.all_Nodes.length; k++) {
 //            System.out.println(myParent.allData.all_Nodes[k].id);
-            if (myParent.allData.all_Nodes[k].id.equals("430873946")) {
+            if (myParent.allData.all_Nodes[k].id==430873946) {
                 System.out.println("Supplier location: Node number " + k + " ID: " + "430873946");
                 supplier = myParent.allData.all_Nodes[k];
                 break;

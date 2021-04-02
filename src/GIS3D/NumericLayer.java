@@ -15,7 +15,7 @@ public class NumericLayer extends LayerDefinition implements Serializable{
     
     static final long serialVersionUID = 3L;
     public LocationNode locationNodes[];
-    public String locationIds[];
+    public long locationIds[];
     public double capacities[];
     public Color maxColor;
     public Color minColor;

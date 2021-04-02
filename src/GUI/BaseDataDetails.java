@@ -45,7 +45,7 @@ public class BaseDataDetails extends javax.swing.JDialog {
                 types[i] = java.lang.String.class;
             }
             for (int i = 0; i < myParent.allData.all_Nodes.length; i++) {
-                data[i][0] = myParent.allData.all_Nodes[i].id;
+                data[i][0] = String.valueOf(myParent.allData.all_Nodes[i].id);
                 data[i][1] = String.valueOf(myParent.allData.all_Nodes[i].lat);
                 data[i][2] = String.valueOf(myParent.allData.all_Nodes[i].lon);
 //                    System.out.println("layers: "+myParent.allData.all_Ways[i].myNodes[j].layers.size());

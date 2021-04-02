@@ -15,6 +15,7 @@ import GIS3D.Scaling;
 import GIS3D.StoreProcessedData;
 import GIS3D.Viewing;
 import MathematicalModel.BenchmarkModel;
+import ProjectManagement.ProjectManagementDialog;
 import Simulation.FlowControl;
 import Simulation.Routing;
 import java.awt.image.BufferedImage;
@@ -130,6 +131,7 @@ public class main_frame extends javax.swing.JFrame {
         saveReports = new javax.swing.JButton();
         moveReportUpButton = new javax.swing.JButton();
         moveReportDownButton = new javax.swing.JButton();
+        jButton5 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -201,7 +203,7 @@ public class main_frame extends javax.swing.JFrame {
 
         jLabel11.setText("Number of parallel CPUs:");
 
-        numCPUPreprocess.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(1), Integer.valueOf(1), null, Integer.valueOf(1)));
+        numCPUPreprocess.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
 
         jPanel12.setBorder(javax.swing.BorderFactory.createTitledBorder("Init simple gridding"));
 
@@ -572,7 +574,7 @@ public class main_frame extends javax.swing.JFrame {
                         .addComponent(delLayerButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(editLayerButton)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -717,7 +719,7 @@ public class main_frame extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
+                    .addComponent(jScrollPane4)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -752,6 +754,13 @@ public class main_frame extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        jButton5.setText("Project management");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -766,7 +775,6 @@ public class main_frame extends javax.swing.JFrame {
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -774,7 +782,11 @@ public class main_frame extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jPanel11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jButton5)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -785,7 +797,9 @@ public class main_frame extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton5))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1088,7 +1102,7 @@ public class main_frame extends javax.swing.JFrame {
             NumericLayer edittingNumericLayer = (NumericLayer) allData.all_Layers.get(selection);
             for (int i = 0; i < edittingNumericLayer.locationIds.length; i++) {
                 FacilityLocationDefinition temp = new FacilityLocationDefinition(numericController, i);
-                temp.IDText.setText(edittingNumericLayer.locationIds[i]);
+                temp.IDText.setText(String.valueOf(edittingNumericLayer.locationIds[i]));
                 temp.CapacityText.setText(String.valueOf(edittingNumericLayer.capacities[i]));
                 numericController.locationDefinitions.add(temp);
             }
@@ -1229,47 +1243,50 @@ public class main_frame extends javax.swing.JFrame {
 
     private void moveReportUpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_moveReportUpButtonActionPerformed
         // TODO add your handling code here:
-        int selection=reportList.getSelectedIndex();
+        int selection = reportList.getSelectedIndex();
         if (selection > 0) {
-            ArrayList<ReportResults> tempReports=new ArrayList();
+            ArrayList<ReportResults> tempReports = new ArrayList();
             ReportResults lowerOne = allData.results.get(selection);
-            ReportResults upperOne = allData.results.get(selection-1);
-            for(int i=0;i<selection-1;i++)
-            {
+            ReportResults upperOne = allData.results.get(selection - 1);
+            for (int i = 0; i < selection - 1; i++) {
                 tempReports.add(allData.results.get(i));
             }
             tempReports.add(lowerOne);
             tempReports.add(upperOne);
-            for(int i=selection+1;i<allData.results.size();i++)
-            {
+            for (int i = selection + 1; i < allData.results.size(); i++) {
                 tempReports.add(allData.results.get(i));
             }
-            allData.results=tempReports;
+            allData.results = tempReports;
             refreshReportList();
         }
     }//GEN-LAST:event_moveReportUpButtonActionPerformed
 
     private void moveReportDownButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_moveReportDownButtonActionPerformed
         // TODO add your handling code here:
-        int selection=reportList.getSelectedIndex();
-        if (selection > -1 && selection < allData.results.size()-1) {
-            ArrayList<ReportResults> tempReports=new ArrayList();
-            ReportResults lowerOne = allData.results.get(selection+1);
+        int selection = reportList.getSelectedIndex();
+        if (selection > -1 && selection < allData.results.size() - 1) {
+            ArrayList<ReportResults> tempReports = new ArrayList();
+            ReportResults lowerOne = allData.results.get(selection + 1);
             ReportResults upperOne = allData.results.get(selection);
-            for(int i=0;i<selection;i++)
-            {
+            for (int i = 0; i < selection; i++) {
                 tempReports.add(allData.results.get(i));
             }
             tempReports.add(lowerOne);
             tempReports.add(upperOne);
-            for(int i=selection+2;i<allData.results.size();i++)
-            {
+            for (int i = selection + 2; i < allData.results.size(); i++) {
                 tempReports.add(allData.results.get(i));
             }
-            allData.results=tempReports;
+            allData.results = tempReports;
             refreshReportList();
         }
     }//GEN-LAST:event_moveReportDownButtonActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+        app = new Viewing(This);
+        ProjectManagementDialog pm = new ProjectManagementDialog(this, false, app);
+        pm.setVisible(true);
+    }//GEN-LAST:event_jButton5ActionPerformed
 
     public void write_data(String file_path, String file_name, String exts) throws IOException {
         System.out.println(file_path + exts);
@@ -1313,7 +1330,7 @@ public class main_frame extends javax.swing.JFrame {
                 return i;
             }
         }
-        System.out.println("Layer not found!");
+        System.out.println("Layer not found!: " + layerName);
         return -1;
     }
 
@@ -1361,13 +1378,17 @@ public class main_frame extends javax.swing.JFrame {
         }
         //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
+//        if (args.length < 1) {
+            /* Create and display the form */
+            java.awt.EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                    new main_frame().setVisible(true);
+                }
+            });
+//        } else {
+            
+//        }
 
-                new main_frame().setVisible(true);
-            }
-        });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton AboutButton;
@@ -1392,6 +1413,7 @@ public class main_frame extends javax.swing.JFrame {
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton5;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel5;

@@ -71,7 +71,7 @@
                 <Column editable="false" title="Name" type="java.lang.String">
                   <Data value="null"/>
                   <Data value="null"/>
-                  <Data value="dd&#x628;&#x627;&#x62f;&#x430;&#x43f;&#x43e;"/>
+                  <Data value=""/>
                   <Data value="null"/>
                 </Column>
                 <Column editable="false" title="NodeId" type="java.lang.String"/>

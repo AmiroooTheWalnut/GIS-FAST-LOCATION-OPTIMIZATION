@@ -4,6 +4,7 @@
  */
 package GIS3D;
 
+import Simulation.FacilityLocation;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -33,15 +34,18 @@ public class AllData implements Serializable {
         currentNumLavaLayers = numLayers;
         if (resetLayerIndex == -1) {
             for (int i = 0; i < all_Nodes.length; i++) {
+                all_Nodes[i].burntBy= new FacilityLocation[numLayers];
                 all_Nodes[i].lava_value_indexed = new double[numLayers];
                 all_Nodes[i].f_value = new double[numLayers];
                 all_Nodes[i].g_value = new double[numLayers];
                 all_Nodes[i].h_value = new double[numLayers];
                 all_Nodes[i].isChecked = new boolean[numLayers];
                 all_Nodes[i].isPassed = new boolean[numLayers];
+                all_Nodes[i].isBurned = false;
             }
         } else if(resetLayerIndex == -2){
             for (int i = 0; i < all_Nodes.length; i++) {
+                all_Nodes[i].burntBy= new FacilityLocation[numLayers];
                 all_Nodes[i].lava_value_indexed = new double[numLayers];
                 all_Nodes[i].f_value = new double[numLayers];
                 all_Nodes[i].g_value = new double[numLayers];
@@ -59,9 +63,15 @@ public class AllData implements Serializable {
             double expectedDenormalized = 3;
             //DENORMALIZE, BREAKS MODULARITY!!!
             for (int i = 0; i < all_Nodes.length; i++) {
+                all_Nodes[i].burntBy= new FacilityLocation[numLayers];
                 all_Nodes[i].lava_value_indexed = new double[numLayers];
                 for (int j = 0; j < numLayers; j++) {
-                    all_Nodes[i].lava_value_indexed[j] = ((double) all_Nodes[i].layers.get(resetLayerIndex)) * expectedDenormalized;
+                    if(all_Nodes[i].layers.get(resetLayerIndex) instanceof NumericLayer)
+                    {
+                        all_Nodes[i].lava_value_indexed[j] = ((double) all_Nodes[i].layers.get(resetLayerIndex)) * expectedDenormalized;
+                    }else{
+                        all_Nodes[i].lava_value_indexed[j] = (((short[]) all_Nodes[i].layers.get(resetLayerIndex))[0]) * expectedDenormalized;
+                    }
                 }
                 all_Nodes[i].f_value = new double[numLayers];
                 all_Nodes[i].g_value = new double[numLayers];

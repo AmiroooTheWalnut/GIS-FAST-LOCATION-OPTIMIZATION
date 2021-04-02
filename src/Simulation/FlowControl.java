@@ -22,14 +22,15 @@ public class FlowControl {
     public ArrayList<Lava_parallel> queue_lavaBuffer = new ArrayList();
     public ArrayList<Lava_parallel> queue_lavaRemove = new ArrayList();
     public boolean isDecoyable = true;
-    private ThreadOneLayerCompetingLavaBased oneLayerCompetingLavaBasedThreads[];
-    private ThreadOneLayerCompetingFacilityBased oneLayerCompetingFacilityBasedThreads[];
-    private ThreadMultiLayerCompetingZoneBased multiLayerCompetingZoneBasedThreads[];
+    public ThreadOneLayerCompetingLavaBased oneLayerCompetingLavaBasedThreads[];
+    public ThreadOneLayerCompetingFacilityBased oneLayerCompetingFacilityBasedThreads[];
+    public ThreadMultiLayerCompetingZoneBased multiLayerCompetingZoneBasedThreads[];
     //LAVA BASED RELATED VARIABLES
     public double minLava = Double.POSITIVE_INFINITY;
     public double maxLava = Double.NEGATIVE_INFINITY;
-    main_frame myParent;
+    public main_frame myParent;
     public int resetLayerIndex = -1;
+    public int blockStreetLayerIndex = -1;
     public int numActiveLava = 1000;
 
     public FlowControl(main_frame parent) {
@@ -169,7 +170,7 @@ public class FlowControl {
     public int detect_way_index(LocationNode node) {
         for (int i = 0; i < myParent.allData.all_Ways.length; i++) {
             for (int j = 0; j < myParent.allData.all_Ways[i].myNodes.length; j++) {
-                if (node.id.equals(myParent.allData.all_Ways[i].myNodes[j].id)) {
+                if (node.id == myParent.allData.all_Ways[i].myNodes[j].id) {
                     return i;
                 }
             }
@@ -180,7 +181,7 @@ public class FlowControl {
     public int detect_node_index(Way way, LocationNode node) {
         int return_val = -1;
         for (int i = 0; i < way.myNodes.length; i++) {
-            if (node.id.equals(way.myNodes[i].id)) {
+            if (node.id == way.myNodes[i].id) {
                 return_val = i;
             }
         }
@@ -189,7 +190,7 @@ public class FlowControl {
 
     public int detect_global_node_index(LocationNode passed_node) {
         for (int i = 0; i < myParent.allData.all_Nodes.length; i++) {
-            if (passed_node.id.equals(myParent.allData.all_Nodes[i].id)) {
+            if (passed_node.id == myParent.allData.all_Nodes[i].id) {
                 return i;
             }
         }
@@ -228,7 +229,7 @@ public class FlowControl {
         for (int i = 0; i < myParent.allData.all_Ways.length; i++) {
 //            myParent.allData.setParallelLayers(1, -1);
             for (int j = 0; j < myParent.allData.all_Ways[i].myNodes.length; j++) {
-                myParent.allData.all_Ways[i].myNodes[j].lava_value_indexed[0]=Double.NEGATIVE_INFINITY;
+                myParent.allData.all_Ways[i].myNodes[j].lava_value_indexed[0] = Double.NEGATIVE_INFINITY;
                 myParent.allData.all_Ways[i].myNodes[j].isBurned = false;
             }
         }
@@ -288,12 +289,15 @@ public class FlowControl {
                 }
                 //System.out.println(lava_exists);
             } while (lava_exists == true);
+            for (int i = 0; i < myParent.allData.all_Nodes[0].burntBy.length; i++) {
+                myParent.preProcessor.setWaysColorBurntByFacility(myParent.allData, i);
+            }
         }
     }
 
     public void simulateMultiLayerCompetingZoneBased(Zones zones[], int trafficLayerIndex, int numCPUs, int passed_ResetLayer, boolean isDebug) {
         resetLayerIndex = passed_ResetLayer;
-        System.out.println("RESET LAYER: "+passed_ResetLayer);
+        System.out.println("RESET LAYER: " + passed_ResetLayer);
         myParent.allData.setParallelLayers(zones.length, passed_ResetLayer);
         for (int i = 0; i < zones.length; i++) {
             for (int j = 0; j < zones[i].locations.length; j++) {
@@ -315,6 +319,9 @@ public class FlowControl {
                 }
                 //System.out.println(lava_exists);
             } while (lava_exists == true);
+            for (int i = 0; i < myParent.allData.all_Nodes[0].burntBy.length; i++) {
+                myParent.preProcessor.setWaysColorBurntByFacility(myParent.allData, i);
+            }
         }
     }
 
@@ -349,6 +356,9 @@ public class FlowControl {
                     }
                     //System.out.println(lava_exists);
                 } while (lava_exists == true);
+                for (int j = 0; j < myParent.allData.all_Nodes[0].burntBy.length; j++) {
+                    myParent.preProcessor.setWaysColorBurntByFacility(myParent.allData, j);
+                }
             }
         }
     }
@@ -374,6 +384,9 @@ public class FlowControl {
                 }
                 //System.out.println(lava_exists);
             } while (lava_exists == true);
+            for(int i=0;i<myParent.allData.all_Nodes[0].burntBy.length;i++){
+                myParent.preProcessor.setWaysColorBurntByFacility(myParent.allData, i);
+            }
         }
     }
 

@@ -121,9 +121,9 @@ public class Routing {
         return dist;
     }
 
-    public int detectNodeIndex(String nodeID, Way way) {
+    public int detectNodeIndex(long nodeID, Way way) {
         for (int i = 0; i < way.myNodes.length; i++) {
-            if (nodeID.equals(way.myNodes[i].id)) {
+            if (nodeID==way.myNodes[i].id) {
                 return i;
             }
         }
@@ -152,7 +152,7 @@ public class Routing {
         endLocation.myWay = endNode.myWays[0];
         currentLocation = startLocation;
         currentLocation.myNode.isChecked[lavaIndex] = true;
-        while (!currentLocation.myNode.id.equals(endLocation.myNode.id)) {
+        while (currentLocation.myNode.id!=endLocation.myNode.id) {
             detectNewNeighbour();
             calculateNeigbors();
             double minValue = Double.POSITIVE_INFINITY;
@@ -183,7 +183,7 @@ public class Routing {
 
         }
         pathDistance = currentLocation.myNode.g_value[lavaIndex];
-        while (!currentLocation.myNode.id.equals(startLocation.myNode.id)) {
+        while (currentLocation.myNode.id!=startLocation.myNode.id) {
             path.add(currentLocation);
             currentLocation = currentLocation.cameFrom;
         }

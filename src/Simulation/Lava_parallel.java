@@ -6,6 +6,7 @@ package Simulation;
 
 import GIS3D.LocationNode;
 import GIS3D.Way;
+import java.awt.Color;
 import java.util.ArrayList;
 
 /**
@@ -14,22 +15,22 @@ import java.util.ArrayList;
  */
 public class Lava_parallel {
 
-    FacilityLocation myFLParent;
-    FlowControl myFCParent;
+    public FacilityLocation myFLParent;
+    public FlowControl myFCParent;
     public LocationNode currentNode;
     public Way currentWay;
     public double fuel;
     public int currentIndex;
-    ArrayList adjacent = new ArrayList();
-    double last_lat;
-    double last_lon;
-    double tollOff = 0.01;
-    int trafficLayerIndex = -1;
-    int lavaIndex;
-    double fuelLoss;
-    double distancePassed;
+    public ArrayList adjacent = new ArrayList();
+    public double last_lat;
+    public double last_lon;
+    public double tollOff = 0.1;
+    public int trafficLayerIndex = -1;
+    public int lavaIndex;
+    public double fuelLoss;
+    public double distancePassed;
 
-    Lava_parallel(FacilityLocation FLParent, LocationNode passedNode, Way passedWay, double passedfuel, double passedLat, double passedLon, int index) {
+    public Lava_parallel(FacilityLocation FLParent, LocationNode passedNode, Way passedWay, double passedfuel, double passedLat, double passedLon, int index) {
         myFLParent = FLParent;
         currentNode = passedNode;
         currentWay = passedWay;
@@ -41,7 +42,7 @@ public class Lava_parallel {
         //flow();
     }
 
-    Lava_parallel(FlowControl FCParent, LocationNode passedNode, Way passedWay, double passedfuel, double passedLat, double passedLon, int index) {
+    public Lava_parallel(FlowControl FCParent, LocationNode passedNode, Way passedWay, double passedfuel, double passedLat, double passedLon, int index) {
         myFCParent = FCParent;
         currentNode = passedNode;
         currentWay = passedWay;
@@ -121,8 +122,11 @@ public class Lava_parallel {
             return;
         }
         currentNode.isBurned = true;
+        currentNode.burntBy[lavaIndex]=myFLParent;
         if (myFLParent.isDecoyable) {
-            color_burn(currentIndex, currentWay, fuel);
+            //currentIndex = detect_index(currentWay, currentNode);
+            color_set_facility(currentIndex, currentWay,myFLParent.color);
+//            color_burn(currentIndex, currentWay, fuel);
         } else {
             //System.out.println(myParent.myParent.flowControl.minLava);
             if (fuel < myFLParent.myParent.flowControl.minLava) {
@@ -175,6 +179,7 @@ public class Lava_parallel {
             return;
         }
         currentNode.isBurned = true;
+        currentNode.burntBy[lavaIndex]=myFLParent;
         if (myFLParent.isDecoyable) {
             color_burn(currentIndex, currentWay, fuel);
         } else {
@@ -227,6 +232,7 @@ public class Lava_parallel {
             return;
         }
         currentNode.isBurned = true;
+        currentNode.burntBy[lavaIndex]=myFLParent;
         if (myFLParent.isDecoyable) {
             color_burn(currentIndex, currentWay, fuel);
         } else {
@@ -315,11 +321,21 @@ public class Lava_parallel {
             }
         }
     }
+    
+    public void color_set_facility(int index,Way way,Color color){
+        if (myFLParent != null) {
+            if (myFLParent.burnable) {
+                way.color[index * 3 + 0] = color.getRed()/255f;
+                way.color[index * 3 + 1] = color.getGreen()/255f;
+                way.color[index * 3 + 2] = color.getBlue()/255f;
+            }
+        }
+    }
 
     public int detect_index(Way way, LocationNode node) {
         int return_val = -1;
         for (int i = 0; i < way.myNodes.length; i++) {
-            if (node.id.equals(way.myNodes[i].id)) {
+            if (node.id==way.myNodes[i].id) {
                 return_val = i;
             }
         }
@@ -333,7 +349,7 @@ public class Lava_parallel {
     public void detect_adjacentParallelZoneLinked() {
         adjacent.clear();
         for (int i = 0; i < currentNode.myWays.length; i++) {
-            if (!currentNode.myWays[i].id.equals(currentWay.id)) {
+            if (currentNode.myWays[i].id!=currentWay.id) {
                 int temp = detect_index(currentNode.myWays[i], currentNode);
                 if (temp != -1) {
                     try {
@@ -370,7 +386,7 @@ public class Lava_parallel {
     public void detectAdjacentCompetingFacilityBased() {
         adjacent.clear();
         for (int i = 0; i < currentNode.myWays.length; i++) {
-            if (!currentNode.myWays[i].id.equals(currentWay.id)) {
+            if (currentNode.myWays[i].id!=currentWay.id) {
                 int temp = detect_index(currentNode.myWays[i], currentNode);
                 if (temp != -1) {
                     try {
@@ -407,7 +423,7 @@ public class Lava_parallel {
     public void detectAdjacentCompetingLavaBased() {
         adjacent.clear();
         for (int i = 0; i < currentNode.myWays.length; i++) {
-            if (!currentNode.myWays[i].id.equals(currentWay.id)) {
+            if (currentNode.myWays[i].id!=currentWay.id) {
                 int temp = detect_index(currentNode.myWays[i], currentNode);
                 if (temp != -1) {
                     try {
@@ -452,7 +468,7 @@ public class Lava_parallel {
     public void detectAdjacentNonCompeting() {
         adjacent.clear();
         for (int i = 0; i < currentNode.myWays.length; i++) {
-            if (!currentNode.myWays[i].id.equals(currentWay.id)) {
+            if (currentNode.myWays[i].id!=currentWay.id) {
                 int temp = detect_index(currentNode.myWays[i], currentNode);
                 if (temp != -1) {
                     try {

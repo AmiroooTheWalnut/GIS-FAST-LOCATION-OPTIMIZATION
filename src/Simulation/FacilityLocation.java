@@ -9,6 +9,7 @@ import GIS3D.LocationNode;
 import GIS3D.Way;
 import GUI.main_frame;
 import com.jme3.math.Vector3f;
+import java.awt.Color;
 import java.util.ArrayList;
 
 /**
@@ -29,6 +30,8 @@ public class FacilityLocation {
     public double obj;
     public double demand=0;//MUST BE DEPRECIATED
     public boolean isDecoyable=false;
+    
+    public Color color;
     
     public Zones zoneParent;
     

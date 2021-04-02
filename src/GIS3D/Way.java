@@ -6,6 +6,7 @@ package GIS3D;
 
 import com.jme3.math.Vector3f;
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  *
@@ -15,16 +16,17 @@ public class Way implements Serializable {
     
     static final long serialVersionUID = 3L;
 
-    public String id;
+    public long id;
     public String type;
     public double typeWeight;
     public boolean isOneWay;
     public double Length;
+    public ArrayList<Long> myNodesTemporaryID;
     public LocationNode myNodes[];
     public Vector3f lines[];
     public float color[];
 
-    Way(String passed_id) {
+    Way(long passed_id) {
         id = passed_id;
     }
 

@@ -54,7 +54,7 @@ public class HeuristicFlowControl {
     public int detectWayIndex(LocationNode node) {
         for (int i = 0; i < myParent.allData.all_Ways.length; i++) {
             for (int j = 0; j < myParent.allData.all_Ways[i].myNodes.length; j++) {
-                if (node.id.equals(myParent.allData.all_Ways[i].myNodes[j].id)) {
+                if (node.id==myParent.allData.all_Ways[i].myNodes[j].id) {
                     return i;
                 }
             }
@@ -65,7 +65,7 @@ public class HeuristicFlowControl {
     public int detectNodeIndex(Way way, LocationNode node) {
         int return_val = -1;
         for (int i = 0; i < way.myNodes.length; i++) {
-            if (node.id.equals(way.myNodes[i].id)) {
+            if (node.id==way.myNodes[i].id) {
                 return_val = i;
             }
         }
@@ -74,7 +74,7 @@ public class HeuristicFlowControl {
 
     public int detectGlobalNodeIndex(LocationNode passed_node) {
         for (int i = 0; i < myParent.allData.all_Nodes.length; i++) {
-            if (passed_node.id.equals(myParent.allData.all_Nodes[i].id)) {
+            if (passed_node.id==myParent.allData.all_Nodes[i].id) {
                 return i;
             }
         }

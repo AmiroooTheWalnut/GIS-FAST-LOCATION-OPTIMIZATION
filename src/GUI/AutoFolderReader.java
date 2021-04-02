@@ -56,7 +56,7 @@ public class AutoFolderReader extends javax.swing.JDialog {
             new Object [][] {
                 {null, null,  new Double(4.0),  new Boolean(true)},
                 {null, null, null, null},
-                {"ddبادапо", null, null, null},
+                {"", null, null, null},
                 {null, null, null, null}
             },
             new String [] {

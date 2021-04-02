@@ -20,6 +20,7 @@ public class LayerDefinition implements Serializable{
     public String categories[];
     public double values[];
     public double maxValue;//for numeric layer
+    public double minValue;//for numeric layer
     public Color colors[];
     public boolean isBenefit=true;
     
@@ -49,7 +50,7 @@ public class LayerDefinition implements Serializable{
             values[5]=1.6;
             values[6]=1.7;
             values[7]=2;
-            values[8]=2.5;
+            values[8]=4;
             values[9]=100;
             colors=new Color[values.length];
             for(int i=0;i<values.length;i++)
