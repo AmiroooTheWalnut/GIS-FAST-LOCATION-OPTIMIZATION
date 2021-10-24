@@ -7,12 +7,17 @@ package esmaieeli.gisFastLocationOptimization.Simulation;
 
 import esmaieeli.gisFastLocationOptimization.GIS3D.AllData;
 import esmaieeli.gisFastLocationOptimization.GIS3D.LayerDefinition;
+import jankovicsandras.imagetracer.ImageTracer;
+import static jankovicsandras.imagetracer.ImageTracer.checkoptions;
+import static jankovicsandras.imagetracer.ImageTracer.imagedataToTracedata;
+import static jankovicsandras.imagetracer.ImageTracer.loadImageData;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,35 +38,133 @@ public class VectorToPolygon {
     public double scaleWidth;
     public double scaleHeight;
 
-    public int[][] layerToIndexedImage(AllData allData, int layerIndex) {
+    public int imgWidth = 1000;
+    public int imgHeight;
+
+    public ArrayList<SimplePolygons> imageToPolygons(int[][] input, AllData allData, int layerIndex) {
+        ArrayList<SimplePolygons> imgBoundaries = getBoundariesPoints(input, allData, layerIndex);
+        ArrayList<SimplePolygons> output = convertToOriginalScale(imgBoundaries);
+        return output;
+    }
+
+    public ArrayList<SimplePolygons> convertToOriginalScale(ArrayList<SimplePolygons> input) {
+        for (int i = 0; i < input.size(); i++) {
+            for (int j = 0; j < input.get(i).polygons.size(); j++) {
+                for (int k = 0; k < input.get(i).polygons.get(j).points.size(); k++) {
+                    double x = input.get(i).polygons.get(j).points.get(k).xIm;
+                    input.get(i).polygons.get(j).points.get(k).xM = ((x / (imgWidth - 1) * scaleWidth) + scaleOffsetX);
+                    input.get(i).polygons.get(j).points.get(k).yM = ((x / (imgHeight - 1) * scaleHeight) + scaleOffsetY);
+                }
+            }
+        }
+        return input;
+    }
+
+    public ArrayList<SimplePolygons> getBoundariesPoints(int[][] input, AllData allData, int layerIndex) {
+
+        ArrayList<SimplePolygons> allBoundaries = new ArrayList();
+        for (int i = 1; i < ((LayerDefinition) (allData.all_Layers.get(layerIndex))).categories.length; i++) {
+            SimplePolygons boundaries = new SimplePolygons();
+            //FOR DEBUGGING
+//            saveIndexedImageAsPNG(getVDImage(input, i), allData, layerIndex, "temp");
+            //FOR DEBUGGING
+
+            BufferedImage image = indexedImageToBufferedImage(getVDImage(input, i), allData, layerIndex);
+
+            try {
+                ImageTracer.ImageData imgd = loadImageData(image);
+
+                HashMap<String, Float> options = checkoptions(null);
+                options.put("roundcoords", 3f);
+                options.put("blurdelta", 1f);
+                options.put("colorsampling", 0f);
+                options.put("numberofcolors", 2f);
+                options.put("ltres", 0.001f);
+                options.put("qtres", 0.001f);
+                options.put("mincolorratio", 0.0f);
+
+                byte[][] palette = new byte[2][4];
+                palette[0][0] = (byte) (-128);  // R
+                palette[0][1] = (byte) (-128);  // G
+                palette[0][2] = (byte) (-128);  // B
+                palette[0][3] = (byte) 127;     // A
+
+                palette[1][0] = (byte) (127);  // R
+                palette[1][1] = (byte) (-128);  // G
+                palette[1][2] = (byte) (-128);  // B
+                palette[1][3] = (byte) 127;     // A
+
+                ImageTracer.IndexedImage ii = imagedataToTracedata(imgd, options, palette);
+
+                for (int j = 0; j < ii.layers.get(1).size(); j++) {
+                    SimplePolygon polygon = new SimplePolygon();
+                    for (int k = 0; k < ii.layers.get(1).get(j).size(); k++) {
+                        if (ii.layers.get(1).get(j).get(k)[0] == 1) {
+                            polygon.points.add(new SimplePoint(ii.layers.get(1).get(j).get(k)[3], ii.layers.get(1).get(j).get(k)[4]));
+                        } else {
+                            polygon.points.add(new SimplePoint(ii.layers.get(1).get(j).get(k)[5], ii.layers.get(1).get(j).get(k)[6]));
+                        }
+                    }
+                    System.out.println("polygon " + j + " added");
+                    boundaries.polygons.add(polygon);
+                }
+
+                System.out.println("!!!!!!!");
+            } catch (Exception ex) {
+                Logger.getLogger(VectorToPolygon.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            allBoundaries.add(boundaries);
+        }
+        return allBoundaries;
+    }
+
+    public int[][] getVDImage(int[][] input, int vDIndex) {
+        int[][] output = new int[input.length][input[0].length];
+        for (int i = 0; i < input.length; i++) {
+            for (int j = 0; j < input[0].length; j++) {
+                if (input[i][j] == vDIndex) {
+                    output[i][j] = 1;
+                }
+            }
+        }
+        return output;
+    }
+
+
+    public int[][] layerToIndexedImage(AllData allData, int layerIndex, boolean isSaveResults) {
         setScaleFactors(allData);
         double ratio = scaleWidth / scaleHeight;
-        int width = 1000;
-        int height = (int) (width * (1 / ratio));
-        int[][] output = new int[width][height];
+
+        imgHeight = (int) (imgWidth * (1 / ratio));
+        int[][] output = new int[imgWidth][imgHeight];
 
         //COULD BE COMPLICATED! FIRST GOING FOR NODES
 //        for(int i=0;i<allData.all_Ways.length;i++){
 //            if(allData.all_Ways[i].)
 //        }
         for (int i = 0; i < allData.all_Nodes.length; i++) {
-            int[] imgP = vectorToImage(allData.all_Nodes[i].lon, allData.all_Nodes[i].lat, width, height);
+            int[] imgP = vectorToImage(allData.all_Nodes[i].lon, allData.all_Nodes[i].lat, imgWidth, imgHeight);
             int cellIndex = ((int) (((short[]) (allData.all_Nodes[i].layers.get(layerIndex)))[0])) - 1;
             if (cellIndex != 0) {
                 output[imgP[0]][imgP[1]] = cellIndex;
             }
         }
-        output = filloutAsoluteTheImage(output, allData, layerIndex, 35, true);
-        saveIndexedImageAsPNG(output, allData, layerIndex, "finalABSFilled");
+        output = filloutAsoluteTheImage(output, allData, layerIndex, 35, isSaveResults);
+        if (isSaveResults == true) {
+            saveIndexedImageAsPNG(output, allData, layerIndex, "finalABSFilled");
+        }
         output = filloutRemainingHoles(output, allData, layerIndex, 4);
-        saveIndexedImageAsPNG(output, allData, layerIndex, "finalFilled");
+        if (isSaveResults == true) {
+            saveIndexedImageAsPNG(output, allData, layerIndex, "finalFilled");
+        }
         return output;
     }
 
     public int[][] filloutRemainingHoles(int[][] input, AllData allData, int layerIndex, int numIterations) {
         boolean isPixelLeft = true;
         int counter = 0;
-        
+
         labelVoidPixels(input);
 
         //        while (isPixelLeft == true) {
@@ -232,10 +335,10 @@ public class VectorToPolygon {
         points.add(init);
         candidates.add(init);
 
-        isChecked[candidates.get(0)[0]][candidates.get(0)[1]]=true;
-        
+        isChecked[candidates.get(0)[0]][candidates.get(0)[1]] = true;
+
         while (candidates.size() > 0) {
-            ArrayList<int[]> tempCandidates=new ArrayList();
+            ArrayList<int[]> tempCandidates = new ArrayList();
             for (int i = 0; i < candidates.size(); i++) {
                 ArrayList<int[]> neighbors = getNeighbors(input, candidates.get(i)[0], candidates.get(i)[1], isChecked);
                 tempCandidates.addAll(neighbors);
@@ -706,6 +809,17 @@ public class VectorToPolygon {
         File outputFile = new File(name + ".png");
         try {
             ImageIO.write(image, "png", outputFile);
+        } catch (IOException ex) {
+            Logger.getLogger(VectorToPolygon.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void saveIndexedImageAsJPG(int[][] input, AllData allData, int layerIndex, String name) {
+        BufferedImage image = indexedImageToBufferedImage(input, allData, layerIndex);
+
+        File outputFile = new File(name + ".jpg");
+        try {
+            ImageIO.write(image, "jpg", outputFile);
         } catch (IOException ex) {
             Logger.getLogger(VectorToPolygon.class.getName()).log(Level.SEVERE, null, ex);
         }

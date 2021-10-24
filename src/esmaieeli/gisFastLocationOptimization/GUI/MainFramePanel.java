@@ -145,7 +145,6 @@ public class MainFramePanel extends javax.swing.JPanel {
         AboutButton = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
-        jButton8 = new javax.swing.JButton();
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Data input"));
 
@@ -782,9 +781,12 @@ public class MainFramePanel extends javax.swing.JPanel {
             }
         });
 
-        jButton7.setText("Convert image to polygon");
-
-        jButton8.setText("Convert layer to polygon");
+        jButton7.setText("Convert layer to polygon");
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel13Layout = new javax.swing.GroupLayout(jPanel13);
         jPanel13.setLayout(jPanel13Layout);
@@ -811,8 +813,7 @@ public class MainFramePanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jButton6)
-                                    .addComponent(jButton7)
-                                    .addComponent(jButton8))))
+                                    .addComponent(jButton7))))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -830,9 +831,7 @@ public class MainFramePanel extends javax.swing.JPanel {
                     .addGroup(jPanel13Layout.createSequentialGroup()
                         .addComponent(jButton6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton8)))
+                        .addComponent(jButton7)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1306,11 +1305,23 @@ public class MainFramePanel extends javax.swing.JPanel {
         int layer=layersList.getSelectedIndex();
         if(!(allData.all_Layers.get(layer) instanceof NumericLayer)){
             VectorToPolygon vp=new VectorToPolygon();
-            vp.layerToIndexedImage(allData,layer);
+            vp.layerToIndexedImage(allData,layer,true);
         }else{
             System.out.println("ONLY CATEGORICAL LAYERS!");
         }
     }//GEN-LAST:event_jButton6ActionPerformed
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        int layer=layersList.getSelectedIndex();
+        if(!(allData.all_Layers.get(layer) instanceof NumericLayer)){
+            VectorToPolygon vp=new VectorToPolygon();
+            int[][] indexedImage=vp.layerToIndexedImage(allData,layer,true);
+            vp.imageToPolygons(indexedImage,allData,layer);
+        }else{
+            System.out.println("ONLY CATEGORICAL LAYERS!");
+        }
+        
+    }//GEN-LAST:event_jButton7ActionPerformed
 
 
     public void refreshReportList() {
@@ -1419,7 +1430,6 @@ public class MainFramePanel extends javax.swing.JPanel {
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel5;
